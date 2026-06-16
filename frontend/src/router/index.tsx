@@ -2,21 +2,27 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 import AuthLayout from '../components/layout/AuthLayout'
+import ProtectedRoute from '../components/auth/ProtectedRoute'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
+const ProfilePage = lazy(() => import('../pages/ProfilePage'))
 
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--color-brand-500)', borderTopColor: 'transparent' }} />
+      <div
+        className="w-6 h-6 rounded-full border-2 animate-spin"
+        style={{ borderColor: 'var(--color-brand-500)', borderTopColor: 'transparent' }}
+      />
     </div>
   )
 }
 
-function withSuspense(Component: React.ComponentType) {
+function wrap(Component: React.ComponentType) {
   return (
     <Suspense fallback={<PageLoader />}>
       <Component />
@@ -29,15 +35,23 @@ const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: withSuspense(HomePage) },
-      { path: 'dashboard', element: withSuspense(DashboardPage) },
+      { index: true, element: wrap(HomePage) },
+      // Protected
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: 'dashboard', element: wrap(DashboardPage) },
+          { path: 'profile', element: wrap(ProfilePage) },
+        ],
+      },
     ],
   },
   {
     element: <AuthLayout />,
     children: [
-      { path: 'login', element: withSuspense(LoginPage) },
-      { path: 'register', element: withSuspense(RegisterPage) },
+      { path: 'login', element: wrap(LoginPage) },
+      { path: 'register', element: wrap(RegisterPage) },
+      { path: 'forgot-password', element: wrap(ForgotPasswordPage) },
     ],
   },
 ])
