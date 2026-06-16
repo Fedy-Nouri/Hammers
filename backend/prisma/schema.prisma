@@ -22,3 +22,29 @@ model User {
 
   @@map("users")
 }
+
+model Agent {
+  id            String   @id
+  name          String
+  description   String?
+  enabled       Boolean  @default(true)
+  configuration Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("agents")
+}
+
+model AiUsageLog {
+  id               String   @id @default(uuid())
+  userId           String?
+  agentId          String?
+  provider         String
+  model            String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  createdAt        DateTime @default(now())
+
+  @@map("ai_usage_logs")
+}
