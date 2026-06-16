@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('../pages/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
+const ProfilePage = lazy(() => import('../pages/ProfilePage'))
 
 function PageLoader() {
   return (
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: 'dashboard', element: wrap(DashboardPage) },
+          { path: 'profile', element: wrap(ProfilePage) },
         ],
       },
     ],

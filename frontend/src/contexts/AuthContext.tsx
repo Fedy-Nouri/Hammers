@@ -11,11 +11,13 @@ interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>
   register: (data: { email: string; password: string; firstName?: string; lastName?: string }) => Promise<void>
   logout: () => Promise<void>
+  updateUser: (partial: Partial<UserResponse>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const REFRESH_TOKEN_KEY = 'refreshToken'
+const USER_KEY = 'authUser'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, accessToken: null, isLoading: true })
@@ -23,12 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setAuth = (accessToken: string, refreshToken: string, user: UserResponse) => {
     sessionStorage.setItem('accessToken', accessToken)
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
     setState({ user, accessToken, isLoading: false })
   }
 
   const clearAuth = () => {
     sessionStorage.removeItem('accessToken')
     localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
     setState({ user: null, accessToken: null, isLoading: false })
   }
 
@@ -38,10 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!refreshToken) { setState((s) => ({ ...s, isLoading: false })); return }
     try {
       const tokens = await authApi.refresh(refreshToken)
-      // Refresh only returns tokens — re-use cached user until profile endpoint exists
+      const cachedUser = localStorage.getItem(USER_KEY)
+      const user: UserResponse | null = cachedUser ? JSON.parse(cachedUser) as UserResponse : null
       sessionStorage.setItem('accessToken', tokens.accessToken)
       localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
-      setState({ user: null, accessToken: tokens.accessToken, isLoading: false })
+      setState({ user, accessToken: tokens.accessToken, isLoading: false })
     } catch {
       clearAuth()
     }
@@ -64,8 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuth()
   }
 
+  const updateUser = (partial: Partial<UserResponse>) => {
+    setState((s) => {
+      const updated = s.user ? { ...s.user, ...partial } : s.user
+      if (updated) localStorage.setItem(USER_KEY, JSON.stringify(updated))
+      return { ...s, user: updated }
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

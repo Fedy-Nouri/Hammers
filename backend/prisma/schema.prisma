@@ -13,6 +13,7 @@ model User {
   passwordHash           String
   firstName              String?
   lastName               String?
+  avatarUrl              String?
   refreshTokenHash       String?
   passwordResetToken     String?
   passwordResetExpiresAt DateTime?
