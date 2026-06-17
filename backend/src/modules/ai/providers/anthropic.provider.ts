@@ -14,6 +14,27 @@ export class AnthropicProvider implements AiProvider {
     this.defaultModel = this.config.get<string>('AI_DEFAULT_MODEL', 'claude-haiku-4-5-20251001');
   }
 
+  async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string> {
+    const model = options?.model ?? this.defaultModel;
+    const systemMsg = messages.find((m) => m.role === 'system');
+    const conversation = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+    const stream = this.client.messages.stream({
+      model,
+      max_tokens: options?.maxTokens ?? 1024,
+      system: systemMsg?.content,
+      messages: conversation,
+    });
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        yield event.delta.text;
+      }
+    }
+  }
+
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult> {
     const model = options?.model ?? this.defaultModel;
 

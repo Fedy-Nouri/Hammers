@@ -14,6 +14,22 @@ export class OpenAiProvider implements AiProvider {
     this.defaultModel = this.config.get<string>('AI_DEFAULT_MODEL', 'gpt-4o-mini');
   }
 
+  async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string> {
+    const model = options?.model ?? this.defaultModel;
+    const stream = await this.client.chat.completions.create({
+      model,
+      messages,
+      temperature: options?.temperature,
+      max_tokens: options?.maxTokens,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) yield content;
+    }
+  }
+
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult> {
     const model = options?.model ?? this.defaultModel;
 

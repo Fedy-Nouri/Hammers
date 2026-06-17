@@ -1,5 +1,6 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
@@ -29,5 +30,36 @@ export class AiController {
       agentId: dto.agentId,
       userId: user.userId,
     });
+  }
+
+  @Post('chat/stream')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Stream AI response via SSE (text/event-stream)' })
+  @ApiResponse({ status: 200, description: 'SSE stream of content chunks' })
+  async chatStream(
+    @CurrentUser() user: ActiveUser,
+    @Body() dto: ChatDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    void user;
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+      for await (const chunk of this.aiService.chatStream(dto.messages, {
+        model: dto.model,
+        temperature: dto.temperature,
+        providerName: dto.provider,
+      })) {
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      }
+    } catch {
+      res.write(`data: ${JSON.stringify({ error: 'AI provider error' })}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
 }

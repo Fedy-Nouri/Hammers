@@ -10,6 +10,7 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
 const ProfilePage = lazy(() => import('../pages/ProfilePage'))
+const ChatPage = lazy(() => import('../pages/ChatPage'))
 
 function PageLoader() {
   return (
@@ -42,6 +43,8 @@ const router = createBrowserRouter([
         children: [
           { path: 'dashboard', element: wrap(DashboardPage) },
           { path: 'profile', element: wrap(ProfilePage) },
+          { path: 'chat', element: wrap(ChatPage) },
+          { path: 'chat/:conversationId', element: wrap(ChatPage) },
         ],
       },
     ],
