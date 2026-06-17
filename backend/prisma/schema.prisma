@@ -76,12 +76,16 @@ model AiUsageLog {
   id               String   @id @default(uuid())
   userId           String?
   agentId          String?
+  conversationId   String?
   provider         String
   model            String
   promptTokens     Int
   completionTokens Int
   totalTokens      Int
+  costUsd          Float    @default(0)
   createdAt        DateTime @default(now())
 
+  @@index([userId, createdAt])
+  @@index([agentId])
   @@map("ai_usage_logs")
 }

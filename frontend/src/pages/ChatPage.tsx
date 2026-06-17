@@ -185,6 +185,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           messages: history,
           agentId: activeConversation?.agentId,
+          conversationId,
         }),
         signal: abort.signal,
       })

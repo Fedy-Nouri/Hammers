@@ -50,4 +50,9 @@ export class ChatDto {
   @Min(0)
   @Max(2)
   temperature?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

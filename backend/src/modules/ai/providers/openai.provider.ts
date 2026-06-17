@@ -14,7 +14,10 @@ export class OpenAiProvider implements AiProvider {
     this.defaultModel = this.config.get<string>('AI_DEFAULT_MODEL', 'gpt-4o-mini');
   }
 
-  async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string> {
+  async *chatStream(
+    messages: ChatMessage[],
+    options?: ChatOptions,
+  ): AsyncGenerator<string, import('./ai-provider.interface').StreamComplete | null> {
     const model = options?.model ?? this.defaultModel;
     const stream = await this.client.chat.completions.create({
       model,
@@ -22,12 +25,28 @@ export class OpenAiProvider implements AiProvider {
       temperature: options?.temperature,
       max_tokens: options?.maxTokens,
       stream: true,
+      stream_options: { include_usage: true },
     });
+
+    let finalUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null =
+      null;
 
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content;
       if (content) yield content;
+      if (chunk.usage) finalUsage = chunk.usage;
     }
+
+    if (!finalUsage) return null;
+    return {
+      provider: this.name,
+      model,
+      usage: {
+        promptTokens: finalUsage.prompt_tokens,
+        completionTokens: finalUsage.completion_tokens,
+        totalTokens: finalUsage.total_tokens,
+      },
+    };
   }
 
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult> {
