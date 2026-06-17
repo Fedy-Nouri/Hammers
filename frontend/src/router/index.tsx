@@ -11,6 +11,7 @@ const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
 const ProfilePage = lazy(() => import('../pages/ProfilePage'))
 const ChatPage = lazy(() => import('../pages/ChatPage'))
+const MarketplacePage = lazy(() => import('../pages/MarketplacePage'))
 
 function PageLoader() {
   return (
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
           { path: 'profile', element: wrap(ProfilePage) },
           { path: 'chat', element: wrap(ChatPage) },
           { path: 'chat/:conversationId', element: wrap(ChatPage) },
+          { path: 'marketplace', element: wrap(MarketplacePage) },
         ],
       },
     ],

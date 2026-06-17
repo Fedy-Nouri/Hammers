@@ -9,6 +9,7 @@ export interface UserProfile {
   firstName: string | null;
   lastName: string | null;
   avatarUrl: string | null;
+  subscriptionPlan: string;
   createdAt: Date;
 }
 
@@ -23,6 +24,7 @@ export class UsersService {
       firstName: user.firstName,
       lastName: user.lastName,
       avatarUrl: user.avatarUrl,
+      subscriptionPlan: user.subscriptionPlan,
       createdAt: user.createdAt,
     };
   }
@@ -47,6 +49,10 @@ export class UsersService {
   ): Promise<UserProfile> {
     const user = await this.prisma.user.update({ where: { id }, data });
     return this.toProfile(user);
+  }
+
+  async deleteAccount(id: string): Promise<void> {
+    await this.prisma.user.delete({ where: { id } });
   }
 
   async changePassword(

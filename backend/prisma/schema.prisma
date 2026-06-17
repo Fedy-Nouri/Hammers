@@ -17,6 +17,7 @@ model User {
   refreshTokenHash       String?
   passwordResetToken     String?
   passwordResetExpiresAt DateTime?
+  subscriptionPlan       String    @default("free")
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 

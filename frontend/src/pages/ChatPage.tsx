@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Bot } from 'lucide-react'
 import { conversationsApi, agentsApi } from '../lib/api/conversations'
 import type { Conversation, Message, Agent } from '../lib/api/conversations'
@@ -53,6 +53,7 @@ function buildMessageContent(text: string, files: AttachedFile[]): string {
 
 export default function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { accessToken } = useAuth()
 
@@ -99,6 +100,18 @@ export default function ChatPage() {
     void fetchConversations()
     agentsApi.list().then(setAgents).catch(() => setAgents([]))
   }, [fetchConversations])
+
+  // Auto-create conversation when launched from marketplace via ?agent=<agentId>
+  useEffect(() => {
+    const agentParam = searchParams.get('agent')
+    if (!agentParam || conversationId) return
+    conversationsApi.create(agentParam)
+      .then((conv) => {
+        setConversations((prev) => [conv, ...prev])
+        void navigate(`/chat/${conv.id}`, { replace: true })
+      })
+      .catch(() => null)
+  }, [searchParams, conversationId, navigate])
 
   useEffect(() => {
     if (conversationId) {
