@@ -21,9 +21,25 @@ model User {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
-  conversations Conversation[]
+  conversations     Conversation[]
+  googleIntegration GoogleIntegration?
 
   @@map("users")
+}
+
+model GoogleIntegration {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  googleEmail           String
+  encryptedAccessToken  String
+  encryptedRefreshToken String
+  tokenExpiresAt        DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("google_integrations")
 }
 
 model Agent {
