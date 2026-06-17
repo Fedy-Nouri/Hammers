@@ -20,8 +20,23 @@ export interface ChatResult {
   };
 }
 
+export interface StreamComplete {
+  provider: string;
+  model: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
 export interface AiProvider {
   readonly name: string;
   chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult>;
-  chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string>;
+  // Returns StreamComplete (or null on error/incomplete) as the generator's TReturn value.
+  // Callers receive it via: const usage = yield* provider.chatStream(...)
+  chatStream(
+    messages: ChatMessage[],
+    options?: ChatOptions,
+  ): AsyncGenerator<string, StreamComplete | null>;
 }

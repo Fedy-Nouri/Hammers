@@ -14,7 +14,10 @@ export class AnthropicProvider implements AiProvider {
     this.defaultModel = this.config.get<string>('AI_DEFAULT_MODEL', 'claude-haiku-4-5-20251001');
   }
 
-  async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string> {
+  async *chatStream(
+    messages: ChatMessage[],
+    options?: ChatOptions,
+  ): AsyncGenerator<string, import('./ai-provider.interface').StreamComplete | null> {
     const model = options?.model ?? this.defaultModel;
     const systemMsg = messages.find((m) => m.role === 'system');
     const conversation = messages
@@ -28,11 +31,28 @@ export class AnthropicProvider implements AiProvider {
       messages: conversation,
     });
 
+    let inputTokens = 0;
+    let outputTokens = 0;
+
     for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      if (event.type === 'message_start') {
+        inputTokens = event.message.usage.input_tokens;
+      } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
         yield event.delta.text;
+      } else if (event.type === 'message_delta') {
+        outputTokens = event.usage.output_tokens;
       }
     }
+
+    return {
+      provider: this.name,
+      model,
+      usage: {
+        promptTokens: inputTokens,
+        completionTokens: outputTokens,
+        totalTokens: inputTokens + outputTokens,
+      },
+    };
   }
 
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult> {

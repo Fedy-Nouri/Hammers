@@ -41,7 +41,6 @@ export class AiController {
     @Body() dto: ChatDto,
     @Res() res: Response,
   ): Promise<void> {
-    void user;
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -52,6 +51,9 @@ export class AiController {
         model: dto.model,
         temperature: dto.temperature,
         providerName: dto.provider,
+        userId: user.userId,
+        agentId: dto.agentId,
+        conversationId: dto.conversationId,
       })) {
         res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
       }

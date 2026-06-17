@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User } from 'lucide-react'
+import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { usersApi } from '../lib/api/users'
+import { usageApi } from '../lib/api/usage'
+import type { UsageSummary, UsageLog } from '../lib/api/usage'
 
 const infoSchema = z.object({
   firstName: z.string().optional(),
@@ -51,6 +53,19 @@ function StatusBanner({ type, message }: { type: 'success' | 'error'; message: s
   )
 }
 
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return String(n)
+}
+
+function formatCost(n: number): string {
+  if (n === 0) return '$0.00'
+  if (n < 0.001) return `$${n.toFixed(6)}`
+  if (n < 1) return `$${n.toFixed(4)}`
+  return `$${n.toFixed(2)}`
+}
+
 export default function ProfilePage() {
   const { user, updateUser } = useAuth()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -60,6 +75,22 @@ export default function ProfilePage() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [summary, setSummary] = useState<UsageSummary | null>(null)
+  const [logs, setLogs] = useState<UsageLog[]>([])
+  const [logsPage, setLogsPage] = useState(1)
+  const [logsTotal, setLogsTotal] = useState(0)
+  const LOGS_LIMIT = 5
+
+  useEffect(() => {
+    usageApi.getSummary(30).then(setSummary).catch(() => null)
+  }, [])
+
+  useEffect(() => {
+    usageApi.getLogs(logsPage, LOGS_LIMIT).then((res) => {
+      setLogs(res.data)
+      setLogsTotal(res.total)
+    }).catch(() => null)
+  }, [logsPage])
 
   const initials = user?.firstName
     ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`.toUpperCase()
@@ -236,7 +267,7 @@ export default function ProfilePage() {
 
       {/* Change password */}
       <div
-        className="rounded-2xl p-6"
+        className="rounded-2xl p-6 mb-4"
         style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
       >
         <div className="flex items-center gap-2 mb-5">
@@ -283,6 +314,146 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Usage & Activity */}
+      <div
+        className="rounded-2xl p-6"
+        style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
+      >
+        <div className="flex items-center gap-2 mb-5">
+          <BarChart2 size={15} style={{ color: 'var(--color-brand-400)' }} />
+          <h2 className="text-sm font-semibold text-white">Usage &amp; Activity</h2>
+          <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--color-surface-3)', color: 'rgba(255,255,255,0.4)' }}>
+            Last 30 days
+          </span>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { icon: Activity, label: 'AI calls', value: summary ? String(summary.totalCalls) : '—', color: '#8b5cf6' },
+            { icon: Zap, label: 'Tokens used', value: summary ? formatTokens(summary.totalTokens) : '—', color: '#3b82f6' },
+            { icon: DollarSign, label: 'Est. cost', value: summary ? formatCost(summary.totalCostUsd) : '—', color: '#10b981' },
+          ].map(({ icon: Icon, label, value, color }) => (
+            <div key={label} className="rounded-xl p-4" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${color}20`, color }}>
+                  <Icon size={13} />
+                </div>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
+              </div>
+              <p className="text-xl font-bold text-white">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* By agent */}
+        {summary && summary.byAgent.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Breakdown by agent</p>
+            <div className="flex flex-col gap-2">
+              {summary.byAgent.map((ag) => {
+                const pct = summary.totalCalls > 0 ? (ag.calls / summary.totalCalls) * 100 : 0
+                return (
+                  <div key={ag.agentId ?? 'unknown'}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-white">{ag.agentId ?? 'Unknown'}</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        {ag.calls} call{ag.calls !== 1 ? 's' : ''} · {formatTokens(ag.totalTokens)} tokens · {formatCost(ag.costUsd)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-surface-3)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-brand-600), #3b82f6)' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* By provider */}
+        {summary && summary.byProvider.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>By provider</p>
+            <div className="flex gap-2 flex-wrap">
+              {summary.byProvider.map((p) => (
+                <div key={p.provider} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs" style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}>
+                  <span className="font-medium text-white capitalize">{p.provider}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)' }}>{p.calls} calls · {formatCost(p.costUsd)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Execution logs */}
+        <div>
+          <p className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Execution logs</p>
+          {logs.length === 0 ? (
+            <div className="flex flex-col items-center py-8 gap-2">
+              <Activity size={20} style={{ color: 'rgba(255,255,255,0.1)' }} />
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>No AI calls recorded yet</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ background: 'var(--color-surface-2)', borderBottom: '1px solid var(--color-border)' }}>
+                      {['Provider / Model', 'Agent', 'Tokens', 'Cost', 'When'].map((h) => (
+                        <th key={h} className="text-left px-3 py-2.5 font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log, i) => (
+                      <tr key={log.id} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--color-surface-2)', borderBottom: i < logs.length - 1 ? '1px solid var(--color-border)' : undefined }}>
+                        <td className="px-3 py-2.5">
+                          <span className="font-medium text-white capitalize">{log.provider}</span>
+                          <span className="ml-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{log.model}</span>
+                        </td>
+                        <td className="px-3 py-2.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{log.agentId ?? '—'}</td>
+                        <td className="px-3 py-2.5">
+                          <span style={{ color: 'rgba(255,255,255,0.7)' }}>{formatTokens(log.totalTokens)}</span>
+                          <span className="ml-1" style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px' }}>
+                            ({formatTokens(log.promptTokens)}↑ {formatTokens(log.completionTokens)}↓)
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5" style={{ color: '#10b981' }}>{formatCost(log.costUsd)}</td>
+                        <td className="px-3 py-2.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                          {new Date(log.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {logsTotal > LOGS_LIMIT && (
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{logsTotal} total logs</span>
+                  <div className="flex items-center gap-2">
+                    <button disabled={logsPage === 1} onClick={() => setLogsPage((p) => p - 1)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+                      style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.6)' }}>
+                      Prev
+                    </button>
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      {logsPage} / {Math.ceil(logsTotal / LOGS_LIMIT)}
+                    </span>
+                    <button disabled={logsPage >= Math.ceil(logsTotal / LOGS_LIMIT)} onClick={() => setLogsPage((p) => p + 1)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30"
+                      style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.6)' }}>
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
