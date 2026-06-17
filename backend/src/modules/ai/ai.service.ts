@@ -23,6 +23,18 @@ export class AiService {
     this.defaultProvider = this.config.get<string>('AI_PROVIDER', 'openai');
   }
 
+  async *chatStream(
+    messages: ChatMessage[],
+    options?: ChatOptions & { providerName?: string },
+  ): AsyncGenerator<string> {
+    const providerName = options?.providerName ?? this.defaultProvider;
+    const provider = this.providers.get(providerName);
+    if (!provider) {
+      throw new BadRequestException(`Unknown AI provider: "${providerName}"`);
+    }
+    yield* provider.chatStream(messages, options);
+  }
+
   async chat(
     messages: ChatMessage[],
     options?: ChatOptions & { providerName?: string; userId?: string; agentId?: string },

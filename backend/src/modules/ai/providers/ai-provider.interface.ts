@@ -23,4 +23,5 @@ export interface ChatResult {
 export interface AiProvider {
   readonly name: string;
   chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResult>;
+  chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<string>;
 }

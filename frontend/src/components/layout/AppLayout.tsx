@@ -49,6 +49,7 @@ export default function AppLayout() {
             {[
               { label: t('nav.home'), path: '/' },
               { label: t('nav.dashboard'), path: '/dashboard' },
+              ...(accessToken ? [{ label: 'Chat', path: '/chat' }] : []),
             ].map(({ label, path }) => (
               <button
                 key={path}
@@ -132,7 +133,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
     </div>
