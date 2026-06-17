@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, RefreshCw, ExternalLink, Video, Users } from 'lucide-react'
+import { Calendar, RefreshCw, ExternalLink, Video, Users, Bot, X, Check } from 'lucide-react'
 import { meetingsApi } from '../lib/api/meetings'
 import type { Meeting, SyncStatus } from '../lib/api/meetings'
 
@@ -50,8 +50,76 @@ function AttendeeAvatars({ attendees }: { attendees: string[] }) {
   )
 }
 
-function MeetingCard({ meeting }: { meeting: Meeting }) {
+function AssistantBadge({
+  status,
+  onCancel,
+  loading,
+}: {
+  status: Meeting['assistantStatus']
+  onCancel: () => void
+  loading: boolean
+}) {
+  if (status !== 'scheduled') return null
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
+      style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa' }}
+    >
+      <Check size={11} />
+      Assistant invited
+      <button
+        onClick={onCancel}
+        disabled={loading}
+        className="ml-1 transition-opacity hover:opacity-70 disabled:opacity-30"
+        title="Cancel invitation"
+      >
+        <X size={11} />
+      </button>
+    </div>
+  )
+}
+
+function MeetingCard({
+  meeting,
+  onInvite,
+  onCancel,
+}: {
+  meeting: Meeting
+  onInvite: (id: string) => Promise<void>
+  onCancel: (id: string) => Promise<void>
+}) {
+  const [actionLoading, setActionLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
   const isOngoing = new Date(meeting.startTime) <= new Date() && new Date(meeting.endTime) >= new Date()
+  const isPast = new Date(meeting.endTime) < new Date()
+  const canInvite = !isPast && meeting.status !== 'cancelled'
+
+  const handleInvite = async () => {
+    setActionLoading(true)
+    setFeedback(null)
+    try {
+      await onInvite(meeting.id)
+      setFeedback({ type: 'success', message: 'Assistant invited successfully' })
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setFeedback({ type: 'error', message: msg ?? 'Failed to invite assistant' })
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    setActionLoading(true)
+    setFeedback(null)
+    try {
+      await onCancel(meeting.id)
+    } catch {
+      setFeedback({ type: 'error', message: 'Failed to cancel invitation' })
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   return (
     <div
@@ -60,7 +128,11 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
     >
       <div
         className="w-1 rounded-full shrink-0"
-        style={{ background: isOngoing ? '#10b981' : 'var(--color-brand-500)' }}
+        style={{
+          background: meeting.assistantStatus === 'scheduled'
+            ? 'var(--color-brand-500)'
+            : isOngoing ? '#10b981' : 'var(--color-border)',
+        }}
       />
 
       <div className="flex-1 min-w-0">
@@ -78,6 +150,21 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {meeting.assistantStatus === 'scheduled' ? (
+              <AssistantBadge status={meeting.assistantStatus} onCancel={() => void handleCancel()} loading={actionLoading} />
+            ) : (
+              canInvite && (
+                <button
+                  onClick={() => void handleInvite()}
+                  disabled={actionLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.7)' }}
+                >
+                  <Bot size={12} />
+                  {actionLoading ? 'Inviting…' : 'Invite assistant'}
+                </button>
+              )
+            )}
             {meeting.meetLink && (
               <button
                 onClick={() => window.open(meeting.meetLink!, '_blank')}
@@ -106,6 +193,16 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
           <div className="flex items-center gap-2 mt-2.5">
             <Users size={11} style={{ color: 'rgba(255,255,255,0.25)' }} />
             <AttendeeAvatars attendees={meeting.attendees} />
+          </div>
+        )}
+
+        {feedback && (
+          <div
+            className="flex items-center gap-1.5 mt-2 text-xs"
+            style={{ color: feedback.type === 'success' ? '#34d399' : '#f87171' }}
+          >
+            {feedback.type === 'success' ? <Check size={11} /> : <X size={11} />}
+            {feedback.message}
           </div>
         )}
       </div>
@@ -143,6 +240,16 @@ export default function MeetingsPage() {
   useEffect(() => {
     void loadMeetings(view)
   }, [view, loadMeetings])
+
+  const handleInvite = async (id: string) => {
+    const updated = await meetingsApi.inviteAssistant(id)
+    setMeetings((prev) => prev.map((m) => (m.id === id ? updated : m)))
+  }
+
+  const handleCancelInvite = async (id: string) => {
+    const updated = await meetingsApi.cancelInvite(id)
+    setMeetings((prev) => prev.map((m) => (m.id === id ? updated : m)))
+  }
 
   const handleSync = async () => {
     setSyncing(true)
@@ -256,7 +363,12 @@ export default function MeetingsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {meetings.map((meeting) => (
-            <MeetingCard key={meeting.id} meeting={meeting} />
+            <MeetingCard
+              key={meeting.id}
+              meeting={meeting}
+              onInvite={handleInvite}
+              onCancel={handleCancelInvite}
+            />
           ))}
         </div>
       )}

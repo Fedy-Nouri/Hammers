@@ -1,5 +1,7 @@
 import { api } from './client'
 
+export type AssistantStatus = 'none' | 'scheduled' | 'joining' | 'in_progress' | 'processing' | 'completed' | 'failed'
+
 export interface Meeting {
   id: string
   googleEventId: string
@@ -12,6 +14,7 @@ export interface Meeting {
   attendees: string[]
   htmlLink: string | null
   status: string
+  assistantStatus: AssistantStatus
   createdAt: string
   updatedAt: string
 }
@@ -30,4 +33,13 @@ export const meetingsApi = {
 
   getSyncStatus: () =>
     api.get<SyncStatus>('/meetings/sync/status').then((r) => r.data),
+
+  inviteAssistant: (id: string) =>
+    api.post<Meeting>(`/meetings/${id}/invite`).then((r) => r.data),
+
+  cancelInvite: (id: string) =>
+    api.delete<Meeting>(`/meetings/${id}/invite`).then((r) => r.data),
+
+  getDashboard: () =>
+    api.get<Meeting[]>('/meetings/dashboard').then((r) => r.data),
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GoogleIntegrationService } from '../google-integration/google-integration.service';
@@ -188,6 +188,39 @@ export class MeetingSyncService {
     }
 
     return null;
+  }
+
+  async inviteAssistant(userId: string, meetingId: string): Promise<Meeting> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: { id: meetingId, userId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+    if (meeting.status === 'cancelled') throw new BadRequestException('Cannot invite assistant to a cancelled meeting');
+    if (meeting.endTime < new Date()) throw new BadRequestException('Cannot invite assistant to a meeting that has already ended');
+    const activeStatuses = ['scheduled', 'joining', 'in_progress', 'processing'];
+    if (activeStatuses.includes(meeting.assistantStatus)) {
+      throw new ConflictException('Assistant is already active for this meeting');
+    }
+
+    return this.prisma.meeting.update({
+      where: { id: meetingId },
+      data: { assistantStatus: 'scheduled' },
+    });
+  }
+
+  async cancelInvite(userId: string, meetingId: string): Promise<Meeting> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: { id: meetingId, userId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+    if (meeting.assistantStatus !== 'scheduled') throw new BadRequestException('Assistant is not invited to this meeting');
+
+    return this.prisma.meeting.update({
+      where: { id: meetingId },
+      data: { assistantStatus: 'none' },
+    });
   }
 
   logSyncError(userId: string, err: unknown): void {

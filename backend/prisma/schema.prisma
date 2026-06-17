@@ -58,8 +58,9 @@ model Meeting {
   meetLink      String?
   attendees     Json     @default("[]")
   htmlLink      String?
-  status        String   @default("confirmed")
-  createdAt     DateTime @default(now())
+  status          String   @default("confirmed")
+  assistantStatus String   @default("none")
+  createdAt       DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

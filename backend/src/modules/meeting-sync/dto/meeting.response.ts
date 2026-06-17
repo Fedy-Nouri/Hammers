@@ -12,6 +12,7 @@ export class MeetingResponse {
   @ApiProperty({ type: [String] }) attendees: string[];
   @ApiPropertyOptional() htmlLink: string | null;
   @ApiProperty() status: string;
+  @ApiProperty({ enum: ['none', 'scheduled', 'joining', 'in_progress', 'processing', 'completed', 'failed'] }) assistantStatus: string;
   @ApiProperty() createdAt: Date;
   @ApiProperty() updatedAt: Date;
 }
