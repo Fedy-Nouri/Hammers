@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity } from 'lucide-react'
+import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity, ShieldAlert } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { usersApi } from '../lib/api/users'
 import { usageApi } from '../lib/api/usage'
@@ -66,8 +67,15 @@ function formatCost(n: number): string {
   return `$${n.toFixed(2)}`
 }
 
+const PLAN_LABELS: Record<string, { label: string; color: string }> = {
+  free: { label: 'Free', color: 'rgba(255,255,255,0.4)' },
+  pro: { label: 'Pro', color: '#8b5cf6' },
+  enterprise: { label: 'Enterprise', color: '#3b82f6' },
+}
+
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, logout } = useAuth()
+  const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [infoStatus, setInfoStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -75,6 +83,8 @@ export default function ProfilePage() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [summary, setSummary] = useState<UsageSummary | null>(null)
   const [logs, setLogs] = useState<UsageLog[]>([])
   const [logsPage, setLogsPage] = useState(1)
@@ -91,6 +101,19 @@ export default function ProfilePage() {
       setLogsTotal(res.total)
     }).catch(() => null)
   }, [logsPage])
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirm) { setDeleteConfirm(true); return }
+    setDeleting(true)
+    try {
+      await usersApi.deleteAccount()
+      await logout()
+      void navigate('/')
+    } catch {
+      setDeleting(false)
+      setDeleteConfirm(false)
+    }
+  }
 
   const initials = user?.firstName
     ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`.toUpperCase()
@@ -188,7 +211,17 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <p className="text-sm font-medium text-white mb-1">Profile photo</p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-medium text-white">Profile photo</p>
+            {user?.subscriptionPlan && (() => {
+              const plan = PLAN_LABELS[user.subscriptionPlan] ?? PLAN_LABELS.free
+              return (
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${plan.color}20`, color: plan.color, border: `1px solid ${plan.color}40` }}>
+                  {plan.label}
+                </span>
+              )
+            })()}
+          </div>
           <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
             JPG, PNG, GIF or WebP · max 5 MB
           </p>
@@ -454,6 +487,43 @@ export default function ProfilePage() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Danger zone */}
+      <div
+        className="rounded-2xl p-6"
+        style={{ background: 'var(--color-surface-1)', border: '1px solid rgba(239,68,68,0.2)' }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <ShieldAlert size={15} style={{ color: '#f87171' }} />
+          <h2 className="text-sm font-semibold" style={{ color: '#f87171' }}>Danger zone</h2>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-white">Delete account</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Permanently removes your account and all data. This cannot be undone.
+            </p>
+          </div>
+          <button
+            onClick={() => void handleDeleteAccount()}
+            disabled={deleting}
+            className="ml-6 flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{
+              background: deleteConfirm ? 'rgba(239,68,68,0.15)' : 'transparent',
+              border: '1px solid rgba(239,68,68,0.4)',
+              color: '#f87171',
+            }}
+          >
+            {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm delete' : 'Delete account'}
+          </button>
+        </div>
+        {deleteConfirm && !deleting && (
+          <p className="text-xs mt-3" style={{ color: 'rgba(239,68,68,0.7)' }}>
+            Click "Confirm delete" again to permanently delete your account.{' '}
+            <button className="underline" onClick={() => setDeleteConfirm(false)}>Cancel</button>
+          </p>
+        )}
       </div>
     </div>
   )

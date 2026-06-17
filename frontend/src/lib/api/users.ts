@@ -21,4 +21,7 @@ export const usersApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.patch<{ message: string }>('/users/me/password', { currentPassword, newPassword }).then(data),
+
+  deleteAccount: () =>
+    api.delete('/users/me'),
 }

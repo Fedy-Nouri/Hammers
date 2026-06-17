@@ -7,6 +7,7 @@ export interface UserResponse {
   firstName?: string
   lastName?: string
   avatarUrl?: string
+  subscriptionPlan: string
   createdAt: string
 }
 

@@ -3,11 +3,14 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -82,6 +85,14 @@ export class UsersController {
     if (!file) throw new BadRequestException('No file provided');
     const avatarUrl = `/uploads/avatars/${file.filename}`;
     return this.usersService.update(user.userId, { avatarUrl });
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete current user account' })
+  @ApiResponse({ status: 204, description: 'Account deleted' })
+  deleteAccount(@CurrentUser() user: ActiveUser): Promise<void> {
+    return this.usersService.deleteAccount(user.userId);
   }
 
   @Patch('me/password')
