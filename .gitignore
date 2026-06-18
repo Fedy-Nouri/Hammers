@@ -39,3 +39,4 @@ agents/meeting-bot/test-results/
 
 #IDE
 /.idea/
+/UI_TEST_CHECKLIST.md

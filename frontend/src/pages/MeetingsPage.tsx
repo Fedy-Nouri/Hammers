@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, RefreshCw, ExternalLink, Video, Users, Bot, X, Check } from 'lucide-react'
+import { Calendar, RefreshCw, ExternalLink, Video, Users, Bot, X, Check, FileText } from 'lucide-react'
 import { meetingsApi } from '../lib/api/meetings'
 import type { Meeting, SyncStatus } from '../lib/api/meetings'
 
@@ -79,14 +79,18 @@ function AssistantBadge({
   )
 }
 
+const TRANSCRIPT_STATUSES: Meeting['assistantStatus'][] = ['joining', 'in_progress', 'processing', 'completed']
+
 function MeetingCard({
   meeting,
   onInvite,
   onCancel,
+  onOpenTranscript,
 }: {
   meeting: Meeting
   onInvite: (id: string) => Promise<void>
   onCancel: (id: string) => Promise<void>
+  onOpenTranscript: (id: string) => void
 }) {
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -94,6 +98,7 @@ function MeetingCard({
   const isOngoing = new Date(meeting.startTime) <= new Date() && new Date(meeting.endTime) >= new Date()
   const isPast = new Date(meeting.endTime) < new Date()
   const canInvite = !isPast && meeting.status !== 'cancelled'
+  const hasTranscript = TRANSCRIPT_STATUSES.includes(meeting.assistantStatus)
 
   const handleInvite = async () => {
     setActionLoading(true)
@@ -150,6 +155,16 @@ function MeetingCard({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {hasTranscript && (
+              <button
+                onClick={() => onOpenTranscript(meeting.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.7)' }}
+              >
+                <FileText size={12} />
+                Transcript
+              </button>
+            )}
             {meeting.assistantStatus === 'scheduled' ? (
               <AssistantBadge status={meeting.assistantStatus} onCancel={() => void handleCancel()} loading={actionLoading} />
             ) : (
@@ -368,6 +383,7 @@ export default function MeetingsPage() {
               meeting={meeting}
               onInvite={handleInvite}
               onCancel={handleCancelInvite}
+              onOpenTranscript={(id) => void navigate(`/meetings/${id}`)}
             />
           ))}
         </div>

@@ -53,6 +53,7 @@ services:
       BOT_GOOGLE_PASSWORD: ${BOT_GOOGLE_PASSWORD}
       BACKEND_URL: http://backend:3000
       BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
     ports:
       - '3001:3001'
     depends_on:

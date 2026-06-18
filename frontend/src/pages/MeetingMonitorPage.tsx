@@ -69,12 +69,13 @@ function formatDateRange(start: string, end: string): string {
   return `${dateStr} · ${startTime} – ${endTime}`
 }
 
-function MonitorCard({ meeting }: { meeting: Meeting }) {
+function MonitorCard({ meeting, onOpen }: { meeting: Meeting; onOpen: (id: string) => void }) {
   const accentColor = STATUS_CONFIG[meeting.assistantStatus]?.color ?? 'var(--color-border)'
 
   return (
     <div
-      className="rounded-xl p-4 flex gap-4"
+      onClick={() => onOpen(meeting.id)}
+      className="rounded-xl p-4 flex gap-4 cursor-pointer transition-all hover:opacity-90"
       style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
     >
       <div
@@ -95,7 +96,10 @@ function MonitorCard({ meeting }: { meeting: Meeting }) {
             <StatusBadge status={meeting.assistantStatus} />
             {meeting.meetLink && (
               <button
-                onClick={() => window.open(meeting.meetLink!, '_blank')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.open(meeting.meetLink!, '_blank')
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all hover:opacity-90 active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #1a73e8, #0f9d58)' }}
               >
@@ -286,7 +290,11 @@ export default function MeetingMonitorPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {filteredMeetings.map((meeting) => (
-            <MonitorCard key={meeting.id} meeting={meeting} />
+            <MonitorCard
+              key={meeting.id}
+              meeting={meeting}
+              onOpen={(id) => void navigate(`/meetings/${id}`)}
+            />
           ))}
         </div>
       )}
