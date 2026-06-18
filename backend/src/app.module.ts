@@ -12,6 +12,7 @@ import { GoogleIntegrationModule } from './modules/google-integration/google-int
 import { MeetingSyncModule } from './modules/meeting-sync/meeting-sync.module';
 import { BotModule } from './modules/bot/bot.module';
 import { TranscriptionModule } from './modules/transcription/transcription.module';
+import { AnalysisModule } from './modules/analysis/analysis.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TranscriptionModule } from './modules/transcription/transcription.modul
     MeetingSyncModule,
     BotModule,
     TranscriptionModule,
+    AnalysisModule,
   ],
 })
 export class AppModule {}
