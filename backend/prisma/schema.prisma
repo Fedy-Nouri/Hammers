@@ -63,11 +63,28 @@ model Meeting {
   createdAt       DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  botJob BotJob?
 
   @@unique([userId, googleEventId])
   @@index([userId, startTime])
   @@map("meetings")
+}
+
+model BotJob {
+  id        String    @id @default(uuid())
+  meetingId String    @unique
+  status    String    @default("pending")
+  attempts  Int       @default(0)
+  lastError String?
+  startedAt DateTime?
+  stoppedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("bot_jobs")
 }
 
 model Agent {

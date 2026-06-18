@@ -10,6 +10,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { UsageModule } from './modules/usage/usage.module';
 import { GoogleIntegrationModule } from './modules/google-integration/google-integration.module';
 import { MeetingSyncModule } from './modules/meeting-sync/meeting-sync.module';
+import { BotModule } from './modules/bot/bot.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MeetingSyncModule } from './modules/meeting-sync/meeting-sync.module';
     UsageModule,
     GoogleIntegrationModule,
     MeetingSyncModule,
+    BotModule,
   ],
 })
 export class AppModule {}

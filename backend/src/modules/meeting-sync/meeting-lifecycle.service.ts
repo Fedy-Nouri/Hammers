@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Meeting } from '@prisma/client';
+import { BotLauncherService } from '../bot/bot-launcher.service';
 
 const JOIN_GRACE_MS = 2 * 60 * 1000;
 const TRACKABLE_STATUSES = ['scheduled', 'joining', 'in_progress'];
@@ -9,23 +10,26 @@ const TRACKABLE_STATUSES = ['scheduled', 'joining', 'in_progress'];
 export class MeetingLifecycleService {
   private readonly logger = new Logger(MeetingLifecycleService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly botLauncher: BotLauncherService,
+  ) {}
 
   async runTick(): Promise<void> {
     const now = new Date();
 
     const meetings = await this.prisma.meeting.findMany({
       where: { assistantStatus: { in: TRACKABLE_STATUSES } },
-      select: { id: true, assistantStatus: true, startTime: true, endTime: true },
+      select: { id: true, assistantStatus: true, startTime: true, endTime: true, meetLink: true },
     });
 
-    const toJoining: string[] = [];
+    const toJoining: Array<{ id: string; meetLink: string | null }> = [];
     const toInProgress: string[] = [];
     const toProcessing: string[] = [];
 
     for (const m of meetings) {
       if (m.assistantStatus === 'scheduled' && m.startTime <= now && m.endTime > now) {
-        toJoining.push(m.id);
+        toJoining.push({ id: m.id, meetLink: m.meetLink });
       } else if (
         m.assistantStatus === 'joining' &&
         new Date(m.startTime.getTime() + JOIN_GRACE_MS) <= now &&
@@ -37,8 +41,10 @@ export class MeetingLifecycleService {
       }
     }
 
-    const transitions = [
-      { ids: toJoining, status: 'joining' },
+    const joiningIds = toJoining.map((m) => m.id);
+
+    const transitions: Array<{ ids: string[]; status: string }> = [
+      { ids: joiningIds, status: 'joining' },
       { ids: toInProgress, status: 'in_progress' },
       { ids: toProcessing, status: 'processing' },
     ];
@@ -55,6 +61,14 @@ export class MeetingLifecycleService {
 
     if (total > 0) {
       this.logger.log(`Lifecycle tick: ${total} transition(s) applied`);
+    }
+
+    for (const { id, meetLink } of toJoining) {
+      if (meetLink) void this.botLauncher.launch(id, meetLink);
+    }
+
+    for (const id of toProcessing) {
+      void this.botLauncher.stop(id);
     }
   }
 
