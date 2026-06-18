@@ -1,0 +1,45 @@
+import { api } from './client'
+
+export type AssistantStatus = 'none' | 'scheduled' | 'joining' | 'in_progress' | 'processing' | 'completed' | 'failed'
+
+export interface Meeting {
+  id: string
+  googleEventId: string
+  title: string
+  description: string | null
+  location: string | null
+  startTime: string
+  endTime: string
+  meetLink: string | null
+  attendees: string[]
+  htmlLink: string | null
+  status: string
+  assistantStatus: AssistantStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SyncStatus {
+  syncing: boolean
+  lastSyncedAt: string | null
+}
+
+export const meetingsApi = {
+  list: (view: 'upcoming' | 'past' | 'all' = 'upcoming') =>
+    api.get<Meeting[]>('/meetings', { params: { view } }).then((r) => r.data),
+
+  triggerSync: () =>
+    api.post<SyncStatus>('/meetings/sync').then((r) => r.data),
+
+  getSyncStatus: () =>
+    api.get<SyncStatus>('/meetings/sync/status').then((r) => r.data),
+
+  inviteAssistant: (id: string) =>
+    api.post<Meeting>(`/meetings/${id}/invite`).then((r) => r.data),
+
+  cancelInvite: (id: string) =>
+    api.delete<Meeting>(`/meetings/${id}/invite`).then((r) => r.data),
+
+  getDashboard: () =>
+    api.get<Meeting[]>('/meetings/dashboard').then((r) => r.data),
+}

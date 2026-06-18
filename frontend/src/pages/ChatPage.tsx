@@ -8,31 +8,7 @@ import MessageList from '../components/chat/MessageList'
 import ChatInput from '../components/chat/ChatInput'
 import type { AttachedFile } from '../components/chat/ChatInput'
 import { useAuth } from '../contexts/AuthContext'
-
-async function* readSSE(response: Response): AsyncGenerator<string> {
-  const reader = response.body!.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const raw = line.slice(6).trim()
-      if (raw === '[DONE]') return
-      try {
-        const parsed = JSON.parse(raw) as { content?: string; error?: string }
-        if (parsed.content) yield parsed.content
-      } catch {
-        // ignore malformed chunks
-      }
-    }
-  }
-}
+import { readSSEData } from '../lib/sse'
 
 function buildMessageContent(text: string, files: AttachedFile[]): string {
   if (files.length === 0) return text
@@ -205,9 +181,11 @@ export default function ChatPage() {
 
       if (!response.ok) throw new Error('Stream failed')
 
-      for await (const chunk of readSSE(response)) {
-        finalContent += chunk
-        setStreamingContent(finalContent)
+      for await (const evt of readSSEData<{ content?: string; error?: string }>(response)) {
+        if (evt.content) {
+          finalContent += evt.content
+          setStreamingContent(finalContent)
+        }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {

@@ -49,15 +49,15 @@ export default function AppLayout() {
             {[
               { label: t('nav.home'), path: '/' },
               { label: t('nav.dashboard'), path: '/dashboard' },
-              ...(accessToken ? [{ label: 'Chat', path: '/chat' }, { label: 'Marketplace', path: '/marketplace' }] : []),
+              ...(accessToken ? [{ label: 'Chat', path: '/chat' }, { label: 'Marketplace', path: '/marketplace' }, { label: 'Meetings', path: '/meetings' }, { label: 'Monitor', path: '/meetings/monitor' }] : []),
             ].map(({ label, path }) => (
               <button
                 key={path}
                 onClick={() => void navigate(path)}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                 style={{
-                  color: (path === '/' ? location.pathname === path : location.pathname.startsWith(path)) ? 'white' : 'rgba(255,255,255,0.5)',
-                  background: (path === '/' ? location.pathname === path : location.pathname.startsWith(path)) ? 'var(--color-surface-3)' : 'transparent',
+                  color: (path === '/' || path === '/meetings' ? location.pathname === path : location.pathname.startsWith(path)) ? 'white' : 'rgba(255,255,255,0.5)',
+                  background: (path === '/' || path === '/meetings' ? location.pathname === path : location.pathname.startsWith(path)) ? 'var(--color-surface-3)' : 'transparent',
                 }}
               >
                 {label}

@@ -22,8 +22,14 @@ dist/
 # Sub-project node_modules
 backend/node_modules/
 frontend/node_modules/
+agents/meeting-bot/node_modules/
 backend/dist/
 frontend/dist/
+agents/meeting-bot/dist/
+
+# Playwright
+agents/meeting-bot/playwright-report/
+agents/meeting-bot/test-results/
 
 # OS
 .DS_Store
@@ -33,3 +39,4 @@ frontend/dist/
 
 #IDE
 /.idea/
+/UI_TEST_CHECKLIST.md
