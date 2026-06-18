@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, RefreshCw, ExternalLink, Video, Users, Bot, X, Check, FileText } from 'lucide-react'
+import { Calendar, RefreshCw, ExternalLink, Video, Users, Bot, X, Check, FileText, ClipboardList } from 'lucide-react'
 import { meetingsApi } from '../lib/api/meetings'
 import type { Meeting, SyncStatus } from '../lib/api/meetings'
 
@@ -81,16 +81,20 @@ function AssistantBadge({
 
 const TRANSCRIPT_STATUSES: Meeting['assistantStatus'][] = ['joining', 'in_progress', 'processing', 'completed']
 
+const REPORT_STATUSES: Meeting['assistantStatus'][] = ['processing', 'completed']
+
 function MeetingCard({
   meeting,
   onInvite,
   onCancel,
   onOpenTranscript,
+  onOpenReport,
 }: {
   meeting: Meeting
   onInvite: (id: string) => Promise<void>
   onCancel: (id: string) => Promise<void>
   onOpenTranscript: (id: string) => void
+  onOpenReport: (id: string) => void
 }) {
   const [actionLoading, setActionLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -99,6 +103,7 @@ function MeetingCard({
   const isPast = new Date(meeting.endTime) < new Date()
   const canInvite = !isPast && meeting.status !== 'cancelled'
   const hasTranscript = TRANSCRIPT_STATUSES.includes(meeting.assistantStatus)
+  const hasReport = REPORT_STATUSES.includes(meeting.assistantStatus)
 
   const handleInvite = async () => {
     setActionLoading(true)
@@ -155,6 +160,16 @@ function MeetingCard({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {hasReport && (
+              <button
+                onClick={() => onOpenReport(meeting.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.7)' }}
+              >
+                <ClipboardList size={12} />
+                Report
+              </button>
+            )}
             {hasTranscript && (
               <button
                 onClick={() => onOpenTranscript(meeting.id)}
@@ -384,6 +399,7 @@ export default function MeetingsPage() {
               onInvite={handleInvite}
               onCancel={handleCancelInvite}
               onOpenTranscript={(id) => void navigate(`/meetings/${id}`)}
+              onOpenReport={(id) => void navigate(`/meetings/${id}/report`)}
             />
           ))}
         </div>

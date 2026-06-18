@@ -13,6 +13,7 @@ import { MeetingSyncModule } from './modules/meeting-sync/meeting-sync.module';
 import { BotModule } from './modules/bot/bot.module';
 import { TranscriptionModule } from './modules/transcription/transcription.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
+import { ReportingModule } from './modules/reporting/reporting.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AnalysisModule } from './modules/analysis/analysis.module';
     BotModule,
     TranscriptionModule,
     AnalysisModule,
+    ReportingModule,
   ],
 })
 export class AppModule {}

@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Meeting } from '@prisma/client';
 import { BotLauncherService } from '../bot/bot-launcher.service';
+import { ReportingService } from '../reporting/reporting.service';
 
 const JOIN_GRACE_MS = 2 * 60 * 1000;
 const TRACKABLE_STATUSES = ['scheduled', 'joining', 'in_progress'];
@@ -13,6 +14,7 @@ export class MeetingLifecycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly botLauncher: BotLauncherService,
+    private readonly reporting: ReportingService,
   ) {}
 
   async runTick(): Promise<void> {
@@ -69,6 +71,7 @@ export class MeetingLifecycleService {
 
     for (const id of toProcessing) {
       void this.botLauncher.stop(id);
+      void this.reporting.generateForMeeting(id);
     }
   }
 

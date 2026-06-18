@@ -15,6 +15,7 @@ const MarketplacePage = lazy(() => import('../pages/MarketplacePage'))
 const MeetingsPage = lazy(() => import('../pages/MeetingsPage'))
 const MeetingMonitorPage = lazy(() => import('../pages/MeetingMonitorPage'))
 const MeetingDetailPage = lazy(() => import('../pages/MeetingDetailPage'))
+const MeetingReportPage = lazy(() => import('../pages/MeetingReportPage'))
 
 function PageLoader() {
   return (
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
           { path: 'meetings', element: wrap(MeetingsPage) },
           { path: 'meetings/monitor', element: wrap(MeetingMonitorPage) },
           { path: 'meetings/:id', element: wrap(MeetingDetailPage) },
+          { path: 'meetings/:id/report', element: wrap(MeetingReportPage) },
         ],
       },
     ],
