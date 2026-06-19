@@ -94,17 +94,32 @@ async function mutePreJoinDevices(page: Page): Promise<void> {
 }
 
 export async function leaveMeet(page: Page): Promise<void> {
-  try {
-    await page.click('button[aria-label="Leave call"]', { timeout: 5_000 });
-    console.log('[meet-joiner] Left meeting via Leave call button');
-  } catch {
-    try {
-      await page.getByRole('button', { name: /leave call/i }).click({ timeout: 3_000 });
-      console.log('[meet-joiner] Left meeting via Leave call button (role)');
-    } catch {
-      console.log('[meet-joiner] Leave button not found — browser will close anyway');
+  // Move mouse to reveal call controls — Meet auto-hides them after a few seconds of inactivity
+  await page.mouse.move(640, 400).catch(() => {});
+  await page.waitForTimeout(500);
+
+  // Use page.evaluate so it works even if controls are visually hidden
+  const clicked = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[aria-label]'));
+    for (const btn of buttons) {
+      const label = btn.getAttribute('aria-label') ?? '';
+      if (/leave/i.test(label)) {
+        btn.click();
+        return label;
+      }
     }
+    return null;
+  }).catch(() => null);
+
+  if (clicked) {
+    console.log(`[meet-joiner] Left meeting via DOM click: "${clicked}"`);
+    await page.waitForTimeout(1_000);
+    return;
   }
+
+  // Fallback: navigate away — terminates the WebRTC connection and drops from the call
+  console.log('[meet-joiner] Leave button not found — navigating away to drop the call');
+  await page.goto('about:blank', { timeout: 5_000 }).catch(() => {});
 }
 
 export async function waitForAdmission(page: Page, timeoutMs: number): Promise<boolean> {

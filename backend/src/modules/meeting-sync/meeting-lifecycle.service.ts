@@ -33,6 +33,9 @@ export class MeetingLifecycleService {
     for (const m of meetings) {
       if (m.assistantStatus === 'scheduled' && new Date(m.startTime.getTime() - JOIN_EARLY_MS) <= now && m.endTime > now) {
         toJoining.push({ id: m.id, meetLink: m.meetLink });
+      } else if (m.assistantStatus === 'joining' && m.endTime <= now) {
+        // Meeting ended while bot was still joining — stop immediately
+        toProcessing.push(m.id);
       } else if (
         m.assistantStatus === 'joining' &&
         new Date(m.startTime.getTime() + JOIN_GRACE_MS) <= now &&
