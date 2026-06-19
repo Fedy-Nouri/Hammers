@@ -2,7 +2,7 @@ import { chromium, BrowserContext, Page } from 'playwright';
 import path from 'path';
 import axios from 'axios';
 import { loginToGoogle } from './google-auth';
-import { joinMeet, waitForAdmission } from './meet-joiner';
+import { joinMeet, leaveMeet, waitForAdmission } from './meet-joiner';
 import { startCapture, AudioCapture } from './audio-capture';
 import { Transcriber } from './transcriber';
 
@@ -131,6 +131,7 @@ export class BotManager {
     this.sessions.delete(meetingId);
     session.transcriber?.stop();
     session.capture?.stop();
+    await leaveMeet(session.page).catch(() => {});
     try {
       await session.context.close();
     } catch {

@@ -3,8 +3,10 @@ import { Page } from 'playwright';
 export type JoinResult = 'joined' | 'waiting';
 
 export async function joinMeet(page: Page, meetUrl: string): Promise<JoinResult> {
-  console.log(`[meet-joiner] Navigating to ${meetUrl}`);
-  await page.goto(meetUrl, { waitUntil: 'networkidle', timeout: 45_000 });
+  // Force English UI regardless of account language settings
+  const url = meetUrl.includes('?') ? `${meetUrl}&hl=en` : `${meetUrl}?hl=en`;
+  console.log(`[meet-joiner] Navigating to ${url}`);
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 45_000 });
   console.log(`[meet-joiner] Page loaded — current URL: ${page.url()}`);
 
   // Detect hard error screens before doing anything else
@@ -28,9 +30,7 @@ export async function joinMeet(page: Page, meetUrl: string): Promise<JoinResult>
     .catch(() => {});
   await page.waitForTimeout(500);
 
-  await mutePreJoinDevices(page);
-
-  // Wait for either the "Join now" or "Ask to join" button — try role-based first, then text
+  // Wait for the join button — its appearance signals the pre-join screen is fully rendered
   console.log('[meet-joiner] Waiting for join button…');
   const joinButton = await Promise.race([
     page.getByRole('button', { name: /join now/i }).waitFor({ timeout: 60_000 }).then(() =>
@@ -40,7 +40,6 @@ export async function joinMeet(page: Page, meetUrl: string): Promise<JoinResult>
       page.getByRole('button', { name: /ask to join/i })
     ),
   ]).catch(async () => {
-    // Fallback: aria-label attribute selectors
     const fallbacks = [
       'button[aria-label*="Join now"]',
       'button[aria-label*="Ask to join"]',
@@ -62,6 +61,9 @@ export async function joinMeet(page: Page, meetUrl: string): Promise<JoinResult>
   const label = (buttonText ?? buttonLabel ?? '').trim();
   console.log(`[meet-joiner] Found button: "${label}"`);
 
+  // Mute cam/mic AFTER join button is visible (pre-join screen fully rendered)
+  await mutePreJoinDevices(page);
+
   const isAskToJoin = /ask to join/i.test(label);
   await joinButton.click();
   console.log(`[meet-joiner] Clicked button — result: ${isAskToJoin ? 'waiting' : 'joined'}`);
@@ -70,15 +72,39 @@ export async function joinMeet(page: Page, meetUrl: string): Promise<JoinResult>
 }
 
 async function mutePreJoinDevices(page: Page): Promise<void> {
-  // Turn off camera
-  await page.getByRole('button', { name: /turn off camera/i }).click({ timeout: 5_000 }).catch(() => {});
-  await page.$('button[aria-label*="Turn off camera"]').then((b) => b?.click()).catch(() => {});
+  // Small settle delay after the join button appeared
+  await page.waitForTimeout(500);
 
-  // Turn off microphone
-  await page.getByRole('button', { name: /turn off microphone/i }).click({ timeout: 5_000 }).catch(() => {});
-  await page.$('button[aria-label*="Turn off microphone"]').then((b) => b?.click()).catch(() => {});
+  // Use page.evaluate so clicks run directly in the DOM — bypasses Playwright
+  // actionability checks that can silently skip partially-rendered buttons
+  const clicked = await page.evaluate(() => {
+    const results: string[] = [];
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('button[aria-label]'));
+    for (const btn of buttons) {
+      const label = btn.getAttribute('aria-label') ?? '';
+      if (/turn off (camera|video|microphone)/i.test(label)) {
+        btn.click();
+        results.push(label);
+      }
+    }
+    return results;
+  });
 
-  console.log('[meet-joiner] Pre-join cam/mic muted');
+  console.log(`[meet-joiner] Muted devices: ${clicked.length ? clicked.join(', ') : 'none found'}`);
+}
+
+export async function leaveMeet(page: Page): Promise<void> {
+  try {
+    await page.click('button[aria-label="Leave call"]', { timeout: 5_000 });
+    console.log('[meet-joiner] Left meeting via Leave call button');
+  } catch {
+    try {
+      await page.getByRole('button', { name: /leave call/i }).click({ timeout: 3_000 });
+      console.log('[meet-joiner] Left meeting via Leave call button (role)');
+    } catch {
+      console.log('[meet-joiner] Leave button not found — browser will close anyway');
+    }
+  }
 }
 
 export async function waitForAdmission(page: Page, timeoutMs: number): Promise<boolean> {
@@ -86,7 +112,6 @@ export async function waitForAdmission(page: Page, timeoutMs: number): Promise<b
   let attempt = 0;
   while (Date.now() < deadline) {
     attempt++;
-    // If the "Ask to join" button is gone, we were admitted
     const askBtn = await page.getByRole('button', { name: /ask to join/i }).count().catch(() => 0);
     if (askBtn === 0) {
       console.log(`[meet-joiner] Admitted after ${attempt} poll(s)`);
