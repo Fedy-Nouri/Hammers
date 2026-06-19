@@ -11,9 +11,13 @@ async function main() {
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: false,
     channel: 'chrome',
+    locale: 'en-US',
     args: [
       '--autoplay-policy=no-user-gesture-required',
       '--disable-blink-features=AutomationControlled',
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      '--lang=en-US',
     ],
   });
 
