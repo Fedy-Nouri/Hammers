@@ -27,25 +27,33 @@ export class BotManager {
   private readonly callbackSecret: string;
   private readonly deepgramApiKey: string;
 
+  private readonly headless: boolean;
+
   constructor() {
     this.botEmail = process.env.BOT_GOOGLE_EMAIL ?? '';
     this.botPassword = process.env.BOT_GOOGLE_PASSWORD ?? '';
     this.backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3000';
     this.callbackSecret = process.env.BOT_CALLBACK_SECRET ?? '';
     this.deepgramApiKey = process.env.DEEPGRAM_API_KEY ?? '';
+    this.headless = process.env.BOT_HEADLESS !== 'false';
+    console.log(`[BotManager] headless=${this.headless}, backendUrl=${this.backendUrl}, secret=${this.callbackSecret ? '***' : '(empty!)'}`);
   }
 
   async launch(meetingId: string, meetingUrl: string): Promise<void> {
     if (this.sessions.has(meetingId)) return;
 
+    console.log(`[BotManager] Launching browser for meeting ${meetingId} (headless=${this.headless})`);
     const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
-      headless: true,
+      headless: this.headless,
       channel: 'chrome',
+      locale: 'en-US',
       args: [
         '--autoplay-policy=no-user-gesture-required',
         '--disable-blink-features=AutomationControlled',
+        '--use-fake-ui-for-media-stream',
+        '--use-fake-device-for-media-stream',
+        '--lang=en-US',
       ],
-      permissions: ['camera', 'microphone'],
       userAgent:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
     });
@@ -75,7 +83,10 @@ export class BotManager {
 
     try {
       await loginToGoogle(page, this.botEmail, this.botPassword);
+      console.log(`[BotManager] Login done for ${meetingId}, joining Meet…`);
+
       const result = await joinMeet(page, meetingUrl);
+      console.log(`[BotManager] joinMeet result: ${result}`);
 
       if (result === 'waiting') {
         await this.sendCallback(meetingId, 'waiting');
@@ -97,14 +108,19 @@ export class BotManager {
           this.callbackSecret,
         );
         session.transcriber.start();
+        console.log(`[BotManager] Transcription started for ${meetingId}`);
       } else if (!this.deepgramApiKey) {
         console.warn(`[BotManager] DEEPGRAM_API_KEY not set — transcription disabled for ${meetingId}`);
       }
 
       await this.sendCallback(meetingId, 'joined');
+      console.log(`[BotManager] Bot fully joined meeting ${meetingId}`);
     } catch (err) {
-      await this.stop(meetingId);
       const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[BotManager] Join failed for ${meetingId}: ${msg}`);
+      await page.screenshot({ path: `./debug-${meetingId}.png` }).catch(() => {});
+      console.log(`[BotManager] Screenshot saved: ./debug-${meetingId}.png`);
+      await this.stop(meetingId);
       await this.sendCallback(meetingId, 'failed', msg);
     }
   }
