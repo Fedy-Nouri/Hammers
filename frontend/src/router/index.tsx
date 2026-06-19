@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 import AuthLayout from '../components/layout/AuthLayout'
 import ProtectedRoute from '../components/auth/ProtectedRoute'
+import MeetingBotLayout from '../components/layout/MeetingBotLayout'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
@@ -51,10 +52,16 @@ const router = createBrowserRouter([
           { path: 'chat', element: wrap(ChatPage) },
           { path: 'chat/:conversationId', element: wrap(ChatPage) },
           { path: 'marketplace', element: wrap(MarketplacePage) },
-          { path: 'meetings', element: wrap(MeetingsPage) },
-          { path: 'meetings/monitor', element: wrap(MeetingMonitorPage) },
-          { path: 'meetings/:id', element: wrap(MeetingDetailPage) },
-          { path: 'meetings/:id/report', element: wrap(MeetingReportPage) },
+          {
+            path: 'meetings',
+            element: <MeetingBotLayout />,
+            children: [
+              { index: true, element: wrap(MeetingsPage) },
+              { path: 'monitor', element: wrap(MeetingMonitorPage) },
+              { path: ':id', element: wrap(MeetingDetailPage) },
+              { path: ':id/report', element: wrap(MeetingReportPage) },
+            ],
+          },
         ],
       },
     ],
