@@ -1,4 +1,5 @@
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import { chromium, BrowserContext, Page } from 'playwright';
+import path from 'path';
 import axios from 'axios';
 import { loginToGoogle } from './google-auth';
 import { joinMeet, waitForAdmission } from './meet-joiner';
@@ -7,8 +8,10 @@ import { Transcriber } from './transcriber';
 
 const ADMISSION_TIMEOUT_MS = 5 * 60 * 1000;
 
+const USER_DATA_DIR =
+  process.env.BOT_USER_DATA_DIR ?? path.join(process.cwd(), '.bot-profile');
+
 interface Session {
-  browser: Browser;
   context: BrowserContext;
   page: Page;
   capture?: AudioCapture;
@@ -35,18 +38,20 @@ export class BotManager {
   async launch(meetingId: string, meetingUrl: string): Promise<void> {
     if (this.sessions.has(meetingId)) return;
 
-    const browser = await chromium.launch({
+    const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
       headless: true,
-      args: ['--autoplay-policy=no-user-gesture-required'],
-    });
-    const context = await browser.newContext({
+      channel: 'chrome',
+      args: [
+        '--autoplay-policy=no-user-gesture-required',
+        '--disable-blink-features=AutomationControlled',
+      ],
       permissions: ['camera', 'microphone'],
       userAgent:
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
     });
     const page = await context.newPage();
 
-    const session: Session = { browser, context, page };
+    const session: Session = { context, page };
     this.sessions.set(meetingId, session);
 
     // Install audio capture before any navigation so the RTCPeerConnection
@@ -111,7 +116,7 @@ export class BotManager {
     session.transcriber?.stop();
     session.capture?.stop();
     try {
-      await session.browser.close();
+      await session.context.close();
     } catch {
       // Already closed
     }

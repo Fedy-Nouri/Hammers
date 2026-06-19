@@ -10,7 +10,10 @@ export class OpenAiProvider implements AiProvider {
   private readonly defaultModel: string;
 
   constructor(private readonly config: ConfigService) {
-    this.client = new OpenAI({ apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY') });
+    this.client = new OpenAI({
+      apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY'),
+      baseURL: this.config.get<string>('OPENAI_BASE_URL') || undefined,
+    });
     this.defaultModel = this.config.get<string>('AI_DEFAULT_MODEL', 'gpt-4o-mini');
   }
 
