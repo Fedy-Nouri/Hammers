@@ -14,4 +14,9 @@ export class BotCallbackDto {
   @IsOptional()
   @IsString()
   error?: string;
+
+  @ApiPropertyOptional({ description: 'Identity of the bot instance sending the callback' })
+  @IsOptional()
+  @IsString()
+  botId?: string;
 }

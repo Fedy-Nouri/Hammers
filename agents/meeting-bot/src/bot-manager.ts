@@ -8,6 +8,9 @@ import { Transcriber } from './transcriber';
 
 const ADMISSION_TIMEOUT_MS = 5 * 60 * 1000;
 
+// One Google account per container → at most one meeting at a time.
+const MAX_CONCURRENT = 1;
+
 const USER_DATA_DIR =
   process.env.BOT_USER_DATA_DIR ?? path.join(process.cwd(), '.bot-profile');
 
@@ -21,6 +24,7 @@ interface Session {
 export class BotManager {
   private sessions = new Map<string, Session>();
 
+  private readonly botId: string;
   private readonly botEmail: string;
   private readonly botPassword: string;
   private readonly backendUrl: string;
@@ -30,6 +34,7 @@ export class BotManager {
   private readonly headless: boolean;
 
   constructor() {
+    this.botId = process.env.BOT_ID ?? '';
     this.botEmail = process.env.BOT_GOOGLE_EMAIL ?? '';
     this.botPassword = process.env.BOT_GOOGLE_PASSWORD ?? '';
     this.backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3000';
@@ -148,7 +153,7 @@ export class BotManager {
     try {
       await axios.patch(
         `${this.backendUrl}/api/bot/callback`,
-        { meetingId, status, error },
+        { meetingId, status, error, botId: this.botId },
         { headers: { 'x-bot-secret': this.callbackSecret }, timeout: 10_000 },
       );
     } catch (err) {
@@ -158,5 +163,13 @@ export class BotManager {
 
   activeSessions(): string[] {
     return [...this.sessions.keys()];
+  }
+
+  hasSession(meetingId: string): boolean {
+    return this.sessions.has(meetingId);
+  }
+
+  isBusy(): boolean {
+    return this.sessions.size >= MAX_CONCURRENT;
   }
 }
