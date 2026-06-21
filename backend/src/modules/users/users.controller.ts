@@ -21,18 +21,13 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
-
-const UPLOAD_DIR = './uploads/avatars';
-mkdirSync(UPLOAD_DIR, { recursive: true });
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -64,11 +59,7 @@ export class UsersController {
   })
   @UseInterceptors(
     FileInterceptor('avatar', {
-      storage: diskStorage({
-        destination: UPLOAD_DIR,
-        filename: (_, file, cb) =>
-          cb(null, `${Date.now()}${extname(file.originalname)}`),
-      }),
+      storage: memoryStorage(),
       fileFilter: (_, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
           return cb(new BadRequestException('Only image files are allowed'), false);
@@ -83,8 +74,7 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('No file provided');
-    const avatarUrl = `/uploads/avatars/${file.filename}`;
-    return this.usersService.update(user.userId, { avatarUrl });
+    return this.usersService.uploadAvatar(user.userId, file);
   }
 
   @Delete('me')
