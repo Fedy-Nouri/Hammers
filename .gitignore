@@ -40,3 +40,7 @@ agents/meeting-bot/test-results/
 #IDE
 /.idea/
 /UI_TEST_CHECKLIST.md
+
+# Local planning / deployment notes
+/DEPLOYMENT.md
+/SCALING_TICKETS.md

@@ -79,19 +79,38 @@ model Meeting {
 }
 
 model BotJob {
-  id        String    @id @default(uuid())
-  meetingId String    @unique
-  status    String    @default("pending")
-  attempts  Int       @default(0)
-  lastError String?
-  startedAt DateTime?
-  stoppedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String    @id @default(uuid())
+  meetingId     String    @unique
+  botInstanceId String?
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  lastError     String?
+  startedAt     DateTime?
+  stoppedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   @@map("bot_jobs")
+}
+
+/// A registered meeting-bot container (MC fleet / SC-001). Each container owns
+/// one Google account and joins one meeting at a time. `currentMeetingId` is the
+/// meeting it is presently assigned to (null when idle); its uniqueness ensures a
+/// meeting is claimed by at most one instance. The backend stores only the
+/// container's reachable `baseUrl` and busy/health state — never Google credentials.
+model BotInstance {
+  id               String    @id @default(uuid())
+  label            String
+  baseUrl          String
+  status           String    @default("offline")
+  currentMeetingId String?   @unique
+  lastHeartbeatAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("bot_instances")
 }
 
 model TranscriptSegment {
