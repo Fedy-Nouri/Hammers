@@ -6,6 +6,9 @@ import { AiService } from '../ai/ai.service';
 import type { ChatMessage } from '../ai/providers/ai-provider.interface';
 import { UpdateEmailDto } from './dto/update-email.dto';
 
+/** Cap transcript segments fed to the report prompt; the rolling summary covers the rest. */
+const MAX_REPORT_SEGMENTS = 1500;
+
 interface RawReport {
   executive?: unknown;
   followUps?: unknown;
@@ -77,6 +80,7 @@ export class ReportingService {
         this.prisma.transcriptSegment.findMany({
           where: { meetingId },
           orderBy: { startMs: 'asc' },
+          take: MAX_REPORT_SEGMENTS,
         }),
         this.prisma.meetingAnalysis.findUnique({ where: { meetingId } }),
         this.prisma.actionItem.findMany({ where: { meetingId }, orderBy: { createdAt: 'asc' } }),

@@ -1,4 +1,12 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
+import { extname } from 'path';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
@@ -15,7 +23,12 @@ export interface UserProfile {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private blobService: BlobServiceClient | null = null;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   private toProfile(user: User): UserProfile {
     return {
@@ -49,6 +62,29 @@ export class UsersService {
   ): Promise<UserProfile> {
     const user = await this.prisma.user.update({ where: { id }, data });
     return this.toProfile(user);
+  }
+
+  async uploadAvatar(id: string, file: Express.Multer.File): Promise<UserProfile> {
+    const container = this.getAvatarContainer();
+    await container.createIfNotExists({ access: 'blob' });
+    const blobName = `${id}/${Date.now()}${extname(file.originalname)}`;
+    const blob = container.getBlockBlobClient(blobName);
+    await blob.uploadData(file.buffer, {
+      blobHTTPHeaders: { blobContentType: file.mimetype },
+    });
+    return this.update(id, { avatarUrl: blob.url });
+  }
+
+  private getAvatarContainer(): ContainerClient {
+    const connectionString = this.config.get<string>('AZURE_STORAGE_CONNECTION_STRING');
+    if (!connectionString) {
+      throw new ServiceUnavailableException('Avatar storage is not configured');
+    }
+    if (!this.blobService) {
+      this.blobService = BlobServiceClient.fromConnectionString(connectionString);
+    }
+    const containerName = this.config.get<string>('AZURE_AVATAR_CONTAINER') ?? 'avatars';
+    return this.blobService.getContainerClient(containerName);
   }
 
   async deleteAccount(id: string): Promise<void> {

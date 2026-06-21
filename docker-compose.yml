@@ -16,6 +16,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: hammers_redis
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -23,17 +34,20 @@ services:
       target: production
     container_name: hammers_backend
     environment:
-      DATABASE_URL: postgresql://hammers:hammers@postgres:5432/hammers_dev?schema=public
+      DATABASE_URL: "postgresql://hammers:hammers@postgres:5432/hammers_dev?schema=public&connection_limit=10"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 7d
       PORT: 3000
       NODE_ENV: production
-      BOT_SERVICE_URL: http://meeting-bot:3001
+      REDIS_URL: redis://redis:6379
       BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING:-}
     ports:
       - '3000:3000'
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1']
@@ -42,23 +56,56 @@ services:
       retries: 6
       start_period: 20s
 
-  meeting-bot:
+  # Bot fleet — one container per Google account (SC-003). Each self-registers
+  # with the backend and joins one meeting at a time. Add capacity by copying a
+  # service block with a new BOT_ID, account credentials, and profile volume.
+  meeting-bot-1:
     build:
       context: ./agents/meeting-bot
       dockerfile: Dockerfile
-    container_name: hammers_meeting_bot
+    container_name: hammers_meeting_bot_1
     environment:
       PORT: 3001
-      BOT_GOOGLE_EMAIL: ${BOT_GOOGLE_EMAIL}
-      BOT_GOOGLE_PASSWORD: ${BOT_GOOGLE_PASSWORD}
+      BOT_ID: bot-1
+      SELF_URL: http://meeting-bot-1:3001
       BACKEND_URL: http://backend:3000
       BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
       DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      BOT_GOOGLE_EMAIL: ${BOT1_GOOGLE_EMAIL}
+      BOT_GOOGLE_PASSWORD: ${BOT1_GOOGLE_PASSWORD}
+      BOT_HEADLESS: 'true'
     ports:
       - '3001:3001'
+    volumes:
+      - bot1_profile:/app/.bot-profile
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  meeting-bot-2:
+    build:
+      context: ./agents/meeting-bot
+      dockerfile: Dockerfile
+    container_name: hammers_meeting_bot_2
+    environment:
+      PORT: 3001
+      BOT_ID: bot-2
+      SELF_URL: http://meeting-bot-2:3001
+      BACKEND_URL: http://backend:3000
+      BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      BOT_GOOGLE_EMAIL: ${BOT2_GOOGLE_EMAIL}
+      BOT_GOOGLE_PASSWORD: ${BOT2_GOOGLE_PASSWORD}
+      BOT_HEADLESS: 'true'
+    ports:
+      - '3002:3001'
+    volumes:
+      - bot2_profile:/app/.bot-profile
     depends_on:
       backend:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  bot1_profile:
+  bot2_profile:

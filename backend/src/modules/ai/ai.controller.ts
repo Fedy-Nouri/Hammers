@@ -1,6 +1,7 @@
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
 import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
@@ -17,6 +18,8 @@ export class AiController {
 
   @Post('chat')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Send messages to the configured AI provider' })
   @ApiResponse({ status: 200, type: ChatResponseDto })
   chat(
@@ -34,6 +37,8 @@ export class AiController {
 
   @Post('chat/stream')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Stream AI response via SSE (text/event-stream)' })
   @ApiResponse({ status: 200, description: 'SSE stream of content chunks' })
   async chatStream(
