@@ -5,9 +5,11 @@ import {
   Headers,
   HttpCode,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
 import { BotLauncherService } from './bot-launcher.service';
 import { BotCallbackDto } from './dto/bot-callback.dto';
 
@@ -21,6 +23,8 @@ export class BotCallbackController {
 
   @Patch('callback')
   @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Internal bot status callback' })
   async callback(
     @Headers('x-bot-secret') secret: string,
