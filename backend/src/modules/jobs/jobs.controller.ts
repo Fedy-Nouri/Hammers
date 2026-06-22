@@ -2,7 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -23,6 +28,7 @@ import { JobsService } from './jobs.service';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { IngestJobDto } from './dto/ingest-job.dto';
 import { ListApplicationsQuery } from './dto/list-applications.query';
+import { UpdateApplicationDto } from './dto/update-application.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
@@ -91,5 +97,31 @@ export class JobsController {
     @Query() query: ListApplicationsQuery,
   ) {
     return this.jobsService.listApplications(user.userId, query.status);
+  }
+
+  @Post('applications/:id/cover-letter')
+  @ApiOperation({ summary: 'Generate (or regenerate) a tailored cover letter' })
+  generateCoverLetter(@CurrentUser() user: ActiveUser, @Param('id') id: string) {
+    return this.jobsService.generateCoverLetter(user.userId, id);
+  }
+
+  @Patch('applications/:id')
+  @ApiOperation({ summary: 'Update an application (kanban status / notes)' })
+  updateApplication(
+    @CurrentUser() user: ActiveUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateApplicationDto,
+  ) {
+    return this.jobsService.updateApplication(user.userId, id, dto);
+  }
+
+  @Delete('applications/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a tracked application' })
+  deleteApplication(
+    @CurrentUser() user: ActiveUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.jobsService.removeApplication(user.userId, id);
   }
 }

@@ -2,16 +2,18 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import { PDFParse } from 'pdf-parse';
-import { JobApplication, JobProfile } from '@prisma/client';
+import { JobApplication, JobProfile, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { IngestJobDto } from './dto/ingest-job.dto';
+import { UpdateApplicationDto } from './dto/update-application.dto';
 import { JOB_AGENT_ID, JobStatus } from './jobs.constants';
 
 // Cap stored resume text so AI prompts stay within a sane token budget.
@@ -99,6 +101,70 @@ export class JobsService {
         gaps: score.gaps,
       },
     });
+  }
+
+  /** Generate (or regenerate) a tailored cover letter for a tracked job. */
+  async generateCoverLetter(userId: string, id: string): Promise<JobApplication> {
+    const job = await this.getOwnedApplication(userId, id);
+    const profile = await this.prisma.jobProfile.findUnique({ where: { userId } });
+    if (!profile?.resumeText) {
+      throw new BadRequestException('Upload a resume before generating a cover letter');
+    }
+    const coverLetter = await this.writeCoverLetter(job, profile.resumeText, userId);
+    return this.prisma.jobApplication.update({ where: { id }, data: { coverLetter } });
+  }
+
+  /** Move an application through the kanban (status) and edit notes. */
+  async updateApplication(
+    userId: string,
+    id: string,
+    dto: UpdateApplicationDto,
+  ): Promise<JobApplication> {
+    const job = await this.getOwnedApplication(userId, id);
+    const data: Prisma.JobApplicationUpdateInput = {};
+    if (dto.status !== undefined) {
+      data.status = dto.status;
+      // Stamp the first time it enters "applied".
+      if (dto.status === 'applied' && !job.appliedAt) data.appliedAt = new Date();
+    }
+    if (dto.notes !== undefined) data.notes = dto.notes;
+    return this.prisma.jobApplication.update({ where: { id }, data });
+  }
+
+  async removeApplication(userId: string, id: string): Promise<void> {
+    await this.getOwnedApplication(userId, id);
+    await this.prisma.jobApplication.delete({ where: { id } });
+  }
+
+  private async getOwnedApplication(userId: string, id: string): Promise<JobApplication> {
+    const job = await this.prisma.jobApplication.findUnique({ where: { id } });
+    if (!job || job.userId !== userId) {
+      throw new NotFoundException('Application not found');
+    }
+    return job;
+  }
+
+  private async writeCoverLetter(
+    job: JobApplication,
+    resumeText: string,
+    userId: string,
+  ): Promise<string> {
+    const system =
+      'You are a professional career writer. Using the candidate resume, write a concise, ' +
+      'specific cover letter (max ~250 words) for the given job. Reference concrete experience ' +
+      'from the resume. Do not invent facts and do not leave placeholders. Return only the letter.';
+    const user =
+      `RESUME:\n${resumeText}\n\n` +
+      `JOB:\nTitle: ${job.title}\nCompany: ${job.company}\n` +
+      `Location: ${job.location ?? 'n/a'}\n\nDescription:\n${job.description}`;
+    const result = await this.ai.chat(
+      [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      { temperature: 0.4, maxTokens: 800, userId, agentId: JOB_AGENT_ID },
+    );
+    return result.content.trim();
   }
 
   /** Ask the AI to rate resume↔job fit. Failures degrade to an unscored row. */
