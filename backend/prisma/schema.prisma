@@ -25,6 +25,7 @@ model User {
   googleIntegration GoogleIntegration?
   meetings          Meeting[]
   jobProfile        JobProfile?
+  jobApplications   JobApplication[]
 
   @@map("users")
 }
@@ -302,6 +303,35 @@ model JobProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("job_profiles")
+}
+
+/// A job the user is tracking (JA-002). Ingested manually for now (a scraper bot
+/// lands in JA-007). The AI scores it against the user's resume on ingest and a
+/// cover letter is generated on demand (JA-003). `status` drives the kanban.
+model JobApplication {
+  id           String    @id @default(uuid())
+  userId       String
+  source       String    @default("manual")
+  url          String?
+  title        String
+  company      String
+  location     String?
+  description  String
+  matchScore   Float?
+  matchSummary String?
+  strengths    String[]
+  gaps         String[]
+  coverLetter  String?
+  status       String    @default("new")
+  notes        String?
+  appliedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("job_applications")
 }
 
 model AiUsageLog {

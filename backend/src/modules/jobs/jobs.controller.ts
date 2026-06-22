@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -20,6 +21,8 @@ import {
 import { memoryStorage } from 'multer';
 import { JobsService } from './jobs.service';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { IngestJobDto } from './dto/ingest-job.dto';
+import { ListApplicationsQuery } from './dto/list-applications.query';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
@@ -73,5 +76,20 @@ export class JobsController {
   ) {
     if (!file) throw new BadRequestException('No file provided');
     return this.jobsService.uploadResume(user.userId, file);
+  }
+
+  @Post('ingest')
+  @ApiOperation({ summary: 'Ingest a job and score it against the resume' })
+  ingest(@CurrentUser() user: ActiveUser, @Body() dto: IngestJobDto) {
+    return this.jobsService.ingest(user.userId, dto);
+  }
+
+  @Get('applications')
+  @ApiOperation({ summary: 'List tracked job applications (optionally by status)' })
+  listApplications(
+    @CurrentUser() user: ActiveUser,
+    @Query() query: ListApplicationsQuery,
+  ) {
+    return this.jobsService.listApplications(user.userId, query.status);
   }
 }
