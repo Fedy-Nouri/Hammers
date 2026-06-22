@@ -26,6 +26,7 @@ model User {
   meetings          Meeting[]
   jobProfile        JobProfile?
   jobApplications   JobApplication[]
+  jobScrapeJobs     JobScrapeJob[]
 
   @@map("users")
 }
@@ -332,6 +333,30 @@ model JobApplication {
 
   @@index([userId, status])
   @@map("job_applications")
+}
+
+/// A scrape run for one user (JA-007). The dedicated job-bot fleet claims a queued
+/// job, scrapes LinkedIn for the user's preferences, and posts results to the
+/// bot-only ingest endpoint. `found` counts new applications created this run.
+model JobScrapeJob {
+  id                String    @id @default(uuid())
+  userId            String
+  status            String    @default("queued")
+  requested         String    @default("scheduled")
+  jobBotInstanceId  String?
+  found             Int       @default(0)
+  attempts          Int       @default(0)
+  lastError         String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status])
+  @@map("job_scrape_jobs")
 }
 
 model AiUsageLog {

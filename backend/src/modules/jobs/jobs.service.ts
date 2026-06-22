@@ -26,6 +26,14 @@ interface ScoreResult {
   gaps: string[];
 }
 
+export interface JobInput {
+  url?: string | null;
+  title: string;
+  company: string;
+  location?: string | null;
+  description: string;
+}
+
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
@@ -78,20 +86,35 @@ export class JobsService {
     if (!profile?.resumeText) {
       throw new BadRequestException('Upload a resume before ingesting jobs');
     }
+    return this.createAndScore(userId, dto, 'manual', profile.resumeText);
+  }
 
+  /**
+   * Create a JobApplication and, when a resume is available, score it. Shared by the
+   * manual ingest path and the scraper-bot ingest path (JA-007); when `resumeText` is
+   * null the row is stored unscored.
+   */
+  async createAndScore(
+    userId: string,
+    data: JobInput,
+    source: string,
+    resumeText: string | null,
+  ): Promise<JobApplication> {
     const application = await this.prisma.jobApplication.create({
       data: {
         userId,
-        source: 'manual',
-        url: dto.url,
-        title: dto.title,
-        company: dto.company,
-        location: dto.location,
-        description: dto.description,
+        source,
+        url: data.url,
+        title: data.title,
+        company: data.company,
+        location: data.location,
+        description: data.description,
       },
     });
 
-    const score = await this.scoreApplication(application, profile.resumeText, userId);
+    if (!resumeText) return application;
+
+    const score = await this.scoreApplication(application, resumeText, userId);
     return this.prisma.jobApplication.update({
       where: { id: application.id },
       data: {

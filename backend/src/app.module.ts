@@ -20,6 +20,7 @@ import { TranscriptionModule } from './modules/transcription/transcription.modul
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { JobScrapeModule } from './modules/job-scrape/job-scrape.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
     AnalysisModule,
     ReportingModule,
     JobsModule,
+    JobScrapeModule,
   ],
 })
 export class AppModule {}
