@@ -19,6 +19,7 @@ import { BotModule } from './modules/bot/bot.module';
 import { TranscriptionModule } from './modules/transcription/transcription.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ReportingModule } from './modules/reporting/reporting.module';
     TranscriptionModule,
     AnalysisModule,
     ReportingModule,
+    JobsModule,
   ],
 })
 export class AppModule {}

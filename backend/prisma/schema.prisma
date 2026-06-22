@@ -24,6 +24,7 @@ model User {
   conversations     Conversation[]
   googleIntegration GoogleIntegration?
   meetings          Meeting[]
+  jobProfile        JobProfile?
 
   @@map("users")
 }
@@ -280,6 +281,27 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+/// Per-user configuration for the Job Application Agent (JA-001): the uploaded
+/// resume (Blob URL + extracted text used for AI scoring) and the job-search
+/// preferences that drive matching. One row per user.
+model JobProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  resumeUrl     String?
+  resumeText    String?
+  desiredTitles String[]
+  locations     String[]
+  remotePref    String   @default("any")
+  salaryMin     Int?
+  keywords      String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_profiles")
 }
 
 model AiUsageLog {
