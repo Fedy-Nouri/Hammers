@@ -105,7 +105,32 @@ services:
       backend:
         condition: service_healthy
 
+  job-bot-1:
+    build:
+      context: ./agents/job-bot
+      dockerfile: Dockerfile
+    container_name: hammers_job_bot_1
+    environment:
+      PORT: 3002
+      BOT_ID: job-bot-1
+      SELF_URL: http://job-bot-1:3002
+      BACKEND_URL: http://backend:3000
+      BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
+      LINKEDIN_EMAIL: ${JOBBOT1_LINKEDIN_EMAIL}
+      LINKEDIN_PASSWORD: ${JOBBOT1_LINKEDIN_PASSWORD}
+      PROXY_URL: ${JOBBOT1_PROXY_URL:-}
+      BOT_HEADLESS: 'true'
+      MAX_JOBS_PER_SCRAPE: '10'
+    ports:
+      - '3003:3002'
+    volumes:
+      - jobbot1_profile:/app/.bot-profile
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   bot1_profile:
   bot2_profile:
+  jobbot1_profile:

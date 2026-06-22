@@ -23,9 +23,11 @@ dist/
 backend/node_modules/
 frontend/node_modules/
 agents/meeting-bot/node_modules/
+agents/job-bot/node_modules/
 backend/dist/
 frontend/dist/
 agents/meeting-bot/dist/
+agents/job-bot/dist/
 
 # Playwright
 agents/meeting-bot/playwright-report/
@@ -44,3 +46,6 @@ agents/meeting-bot/test-results/
 # Local planning / deployment notes
 /DEPLOYMENT.md
 /SCALING_TICKETS.md
+
+# Tickets
+/tickets/
