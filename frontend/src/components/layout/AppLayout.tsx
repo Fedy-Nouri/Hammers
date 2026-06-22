@@ -49,7 +49,7 @@ export default function AppLayout() {
             {[
               { label: t('nav.home'), path: '/' },
               { label: t('nav.dashboard'), path: '/dashboard' },
-              ...(accessToken ? [{ label: 'Chat', path: '/chat' }, { label: 'Marketplace', path: '/marketplace' }, { label: 'Meeting Bot', path: '/meetings' }] : []),
+              ...(accessToken ? [{ label: 'Chat', path: '/chat' }, { label: 'Marketplace', path: '/marketplace' }, { label: 'Meeting Bot', path: '/meetings' }, { label: 'Jobs', path: '/jobs' }] : []),
             ].map(({ label, path }) => (
               <button
                 key={path}

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Mic, PenLine, Map, Zap, ArrowRight } from 'lucide-react'
+import { Search, Mic, PenLine, Map, Briefcase, Zap, ArrowRight } from 'lucide-react'
 import { agentsApi } from '../lib/api/conversations'
 import type { Agent } from '../lib/api/conversations'
 
@@ -8,12 +8,14 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
   'meeting-notes': Mic,
   'content-generator': PenLine,
   'travel-agent': Map,
+  'job-agent': Briefcase,
 }
 
 const AGENT_COLORS: Record<string, string> = {
   'meeting-notes': '#8b5cf6',
   'content-generator': '#3b82f6',
   'travel-agent': '#10b981',
+  'job-agent': '#f59e0b',
 }
 
 type FilterMode = 'all' | 'active'
@@ -45,6 +47,11 @@ export default function MarketplacePage() {
   }, [agents, search, filter])
 
   function launch(agentId: string) {
+    // The Job Hunter has its own workspace rather than a chat thread.
+    if (agentId === 'job-agent') {
+      void navigate('/jobs')
+      return
+    }
     void navigate(`/chat?agent=${agentId}`)
   }
 
