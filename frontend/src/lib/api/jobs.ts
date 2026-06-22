@@ -65,6 +65,21 @@ export interface IngestJobInput {
   description: string
 }
 
+export type ScrapeStatus = 'queued' | 'running' | 'done' | 'failed'
+
+export interface ScrapeJob {
+  id: string
+  status: ScrapeStatus
+  requested: string
+  found: number
+  attempts: number
+  lastError: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export const jobsApi = {
   getProfile: () =>
     api.get<JobProfile | null>('/jobs/profile').then(data),
@@ -99,4 +114,8 @@ export const jobsApi = {
     api.patch<JobApplication>(`/jobs/applications/${id}`, body).then(data),
 
   deleteApplication: (id: string) => api.delete(`/jobs/applications/${id}`),
+
+  triggerScrape: () => api.post<ScrapeJob>('/jobs/scrape').then(data),
+
+  getScrapeStatus: () => api.get<ScrapeJob | null>('/jobs/scrape/status').then(data),
 }

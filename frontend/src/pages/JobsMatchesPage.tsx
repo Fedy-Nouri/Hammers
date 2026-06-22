@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ExternalLink, Bookmark, X, Copy, Check } from 'lucide-react'
+import { Sparkles, ExternalLink, Bookmark, X, Copy, Check, RefreshCw } from 'lucide-react'
 import { jobsApi, type JobApplication } from '../lib/api/jobs'
 import { ScoreBadge } from './JobsSetupPage'
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export default function JobsMatchesPage() {
   const navigate = useNavigate()
@@ -11,14 +13,45 @@ export default function JobsMatchesPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [scraping, setScraping] = useState(false)
+  const [scrapeMsg, setScrapeMsg] = useState<string | null>(null)
+
+  const load = useCallback(
+    () => jobsApi.listApplications('new').then(setItems).catch(() => setItems([])),
+    [],
+  )
 
   useEffect(() => {
-    jobsApi
-      .listApplications('new')
-      .then(setItems)
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false))
-  }, [])
+    load().finally(() => setLoading(false))
+  }, [load])
+
+  const findJobs = async () => {
+    setScraping(true)
+    setScrapeMsg('Starting…')
+    try {
+      await jobsApi.triggerScrape()
+      const deadline = Date.now() + 120_000 // poll up to 2 minutes
+      while (Date.now() < deadline) {
+        await sleep(3_000)
+        const job = await jobsApi.getScrapeStatus()
+        if (!job) break
+        if (job.status === 'queued') setScrapeMsg('Queued — waiting for a scraper…')
+        else if (job.status === 'running') setScrapeMsg('Scraping LinkedIn…')
+        else if (job.status === 'done') {
+          setScrapeMsg(`Found ${job.found} new job${job.found === 1 ? '' : 's'}`)
+          await load()
+          break
+        } else if (job.status === 'failed') {
+          setScrapeMsg(`Scrape failed: ${job.lastError ?? 'unknown error'}`)
+          break
+        }
+      }
+    } catch {
+      setScrapeMsg('Could not start a scrape')
+    } finally {
+      setScraping(false)
+    }
+  }
 
   const patch = (updated: JobApplication) =>
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
@@ -54,11 +87,29 @@ export default function JobsMatchesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Matches</h1>
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          AI-scored jobs to review. Save the good ones to your board or dismiss the rest.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-1">Matches</h1>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            AI-scored jobs to review. Save the good ones to your board or dismiss the rest.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <button
+            onClick={() => void findJobs()}
+            disabled={scraping}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)' }}
+          >
+            <RefreshCw size={14} className={scraping ? 'animate-spin' : ''} />
+            {scraping ? 'Finding…' : 'Find jobs'}
+          </button>
+          {scrapeMsg && (
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {scrapeMsg}
+            </span>
+          )}
+        </div>
       </div>
 
       {loading ? (
