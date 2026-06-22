@@ -359,6 +359,23 @@ model JobScrapeJob {
   @@map("job_scrape_jobs")
 }
 
+/// A registered job-bot scraper container (JA-007). Kept separate from the meeting
+/// fleet's BotInstance: scraping is short batch work, so this fleet has its own
+/// registry. `currentScrapeJobId` is the scrape it is presently running (null when
+/// idle); its uniqueness ensures a scrape is claimed by at most one instance.
+model JobBotInstance {
+  id                 String    @id @default(uuid())
+  label              String
+  baseUrl            String
+  status             String    @default("offline")
+  currentScrapeJobId String?   @unique
+  lastHeartbeatAt    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("job_bot_instances")
+}
+
 model AiUsageLog {
   id               String   @id @default(uuid())
   userId           String?
