@@ -24,6 +24,9 @@ model User {
   conversations     Conversation[]
   googleIntegration GoogleIntegration?
   meetings          Meeting[]
+  jobProfile        JobProfile?
+  jobApplications   JobApplication[]
+  jobScrapeJobs     JobScrapeJob[]
 
   @@map("users")
 }
@@ -280,6 +283,97 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+/// Per-user configuration for the Job Application Agent (JA-001): the uploaded
+/// resume (Blob URL + extracted text used for AI scoring) and the job-search
+/// preferences that drive matching. One row per user.
+model JobProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  resumeUrl     String?
+  resumeText    String?
+  desiredTitles String[]
+  locations     String[]
+  remotePref    String   @default("any")
+  salaryMin     Int?
+  keywords      String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_profiles")
+}
+
+/// A job the user is tracking (JA-002). Ingested manually for now (a scraper bot
+/// lands in JA-007). The AI scores it against the user's resume on ingest and a
+/// cover letter is generated on demand (JA-003). `status` drives the kanban.
+model JobApplication {
+  id           String    @id @default(uuid())
+  userId       String
+  source       String    @default("manual")
+  url          String?
+  title        String
+  company      String
+  location     String?
+  description  String
+  matchScore   Float?
+  matchSummary String?
+  strengths    String[]
+  gaps         String[]
+  coverLetter  String?
+  status       String    @default("new")
+  notes        String?
+  appliedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("job_applications")
+}
+
+/// A scrape run for one user (JA-007). The dedicated job-bot fleet claims a queued
+/// job, scrapes LinkedIn for the user's preferences, and posts results to the
+/// bot-only ingest endpoint. `found` counts new applications created this run.
+model JobScrapeJob {
+  id                String    @id @default(uuid())
+  userId            String
+  status            String    @default("queued")
+  requested         String    @default("scheduled")
+  jobBotInstanceId  String?
+  found             Int       @default(0)
+  attempts          Int       @default(0)
+  lastError         String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status])
+  @@map("job_scrape_jobs")
+}
+
+/// A registered job-bot scraper container (JA-007). Kept separate from the meeting
+/// fleet's BotInstance: scraping is short batch work, so this fleet has its own
+/// registry. `currentScrapeJobId` is the scrape it is presently running (null when
+/// idle); its uniqueness ensures a scrape is claimed by at most one instance.
+model JobBotInstance {
+  id                 String    @id @default(uuid())
+  label              String
+  baseUrl            String
+  status             String    @default("offline")
+  currentScrapeJobId String?   @unique
+  lastHeartbeatAt    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("job_bot_instances")
 }
 
 model AiUsageLog {

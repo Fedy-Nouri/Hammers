@@ -4,6 +4,7 @@ import AppLayout from '../components/layout/AppLayout'
 import AuthLayout from '../components/layout/AuthLayout'
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import MeetingBotLayout from '../components/layout/MeetingBotLayout'
+import JobsLayout from '../components/layout/JobsLayout'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
@@ -17,6 +18,9 @@ const MeetingsPage = lazy(() => import('../pages/MeetingsPage'))
 const MeetingMonitorPage = lazy(() => import('../pages/MeetingMonitorPage'))
 const MeetingDetailPage = lazy(() => import('../pages/MeetingDetailPage'))
 const MeetingReportPage = lazy(() => import('../pages/MeetingReportPage'))
+const JobsBoardPage = lazy(() => import('../pages/JobsBoardPage'))
+const JobsMatchesPage = lazy(() => import('../pages/JobsMatchesPage'))
+const JobsSetupPage = lazy(() => import('../pages/JobsSetupPage'))
 
 function PageLoader() {
   return (
@@ -60,6 +64,15 @@ const router = createBrowserRouter([
               { path: 'monitor', element: wrap(MeetingMonitorPage) },
               { path: ':id', element: wrap(MeetingDetailPage) },
               { path: ':id/report', element: wrap(MeetingReportPage) },
+            ],
+          },
+          {
+            path: 'jobs',
+            element: <JobsLayout />,
+            children: [
+              { index: true, element: wrap(JobsBoardPage) },
+              { path: 'matches', element: wrap(JobsMatchesPage) },
+              { path: 'setup', element: wrap(JobsSetupPage) },
             ],
           },
         ],
