@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { PDFParse } from 'pdf-parse';
 import { JobApplication, JobProfile, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -261,7 +263,23 @@ export class JobsService {
     }
   }
 
+  /**
+   * Persist the uploaded PDF. Uses Azure Blob when configured; otherwise falls back
+   * to local disk (default: `agents/job-bot/cvs`, overridable via RESUME_STORAGE_DIR)
+   * so the agent can be tested without Azure. Only `resumeText` matters for scoring;
+   * the stored file/URL is just a reference.
+   */
   private async storeResume(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    if (this.config.get<string>('AZURE_STORAGE_CONNECTION_STRING')) {
+      return this.storeResumeAzure(userId, file);
+    }
+    return this.storeResumeLocal(userId, file);
+  }
+
+  private async storeResumeAzure(
     userId: string,
     file: Express.Multer.File,
   ): Promise<string> {
@@ -273,6 +291,20 @@ export class JobsService {
       blobHTTPHeaders: { blobContentType: file.mimetype },
     });
     return blob.url;
+  }
+
+  private async storeResumeLocal(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const dir =
+      this.config.get<string>('RESUME_STORAGE_DIR') ??
+      path.resolve(process.cwd(), '..', 'agents', 'job-bot', 'cvs');
+    await fs.mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, `${userId}-${Date.now()}.pdf`);
+    await fs.writeFile(filePath, file.buffer);
+    this.logger.log(`Stored resume locally at ${filePath}`);
+    return filePath;
   }
 
   private getResumeContainer(): ContainerClient {

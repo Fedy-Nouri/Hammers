@@ -49,3 +49,6 @@ agents/meeting-bot/test-results/
 
 # Tickets
 /tickets/
+
+# Locally-stored resumes (PII) — keep the folder, ignore the PDFs
+agents/job-bot/cvs/*.pdf
