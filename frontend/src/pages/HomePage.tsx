@@ -1,25 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Mic, PenLine, Map, Sparkles } from 'lucide-react'
+import { ArrowRight, Mic, Briefcase, Sparkles } from 'lucide-react'
 
 const agents = [
   {
     icon: Mic,
-    title: 'Meeting Notes',
-    description: 'Transform recordings into actionable summaries, decisions, and follow-ups instantly.',
+    title: 'Meeting Copilot',
+    description: 'Joins your Google Meet calls, transcribes them live, and delivers summaries, action items, and follow-up emails.',
     color: '#8b5cf6',
   },
   {
-    icon: PenLine,
-    title: 'Content Generator',
-    description: 'Create blogs, LinkedIn posts, emails, and marketing copy tailored to your voice.',
-    color: '#3b82f6',
-  },
-  {
-    icon: Map,
-    title: 'Travel Planner',
-    description: 'Get personalized itineraries, hotel picks, and day-by-day schedules in seconds.',
-    color: '#10b981',
+    icon: Briefcase,
+    title: 'Job Hunter',
+    description: 'Finds jobs, scores them against your resume, drafts tailored cover letters, and tracks every application on a kanban board.',
+    color: '#f59e0b',
   },
 ]
 
@@ -62,7 +56,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-10" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Specialized assistants that handle your meetings, content, and travel — so you can focus on what matters.
+          Specialized assistants that sit in your meetings and run your job search — so you can focus on what matters.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -86,7 +80,7 @@ export default function HomePage() {
 
       {/* Agent cards */}
       <section className="relative max-w-7xl mx-auto px-6 pb-28">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
           {agents.map(({ icon: Icon, title, description, color }) => (
             <div
               key={title}
