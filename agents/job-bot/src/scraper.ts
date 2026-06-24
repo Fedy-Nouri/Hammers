@@ -16,7 +16,26 @@ export interface ScrapedJob {
   description: string;
 }
 
-const DETAIL_TIMEOUT_MS = 2_000;
+const DETAIL_WAIT_MS = 2_500;
+
+// The left-column job cards — LinkedIn's authenticated jobs list. We try several
+// and use whichever matches the most elements (logged for diagnosis).
+const CARD_SELECTORS = [
+  'li[data-occludable-job-id]',
+  'div.job-card-container',
+  'li.scaffold-layout__list-item',
+  '.jobs-search-results__list-item',
+  '.scaffold-layout__list-item',
+];
+
+const TITLE_SELECTOR =
+  '.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title, .t-24';
+const COMPANY_SELECTOR =
+  '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name';
+const LOCATION_SELECTOR =
+  '.job-details-jobs-unified-top-card__primary-description-container, .jobs-unified-top-card__bullet';
+const DESC_SELECTOR =
+  '#job-details, .jobs-description__content, .jobs-description-content__text';
 
 /** Map our remote preference to LinkedIn's `f_WT` workplace-type filter. */
 function remoteFilter(pref?: string): string | undefined {
@@ -27,12 +46,9 @@ function remoteFilter(pref?: string): string | undefined {
 }
 
 /**
- * Scrape LinkedIn's jobs search for the user's preferences and return up to `max`
- * listings. Discover-only: it reads listings, never applies.
- *
- * NOTE: LinkedIn's DOM changes often and is bot-gated; the selectors below are
- * best-effort with fallbacks and will need tuning against the live site once a
- * platform account + proxy are configured.
+ * Scrape LinkedIn's authenticated jobs search for the user's preferences. Logs
+ * per-selector card counts and saves linkedin-jobs-debug.png so the listing DOM
+ * can be diagnosed. Discover-only: reads listings, never applies.
  */
 export async function scrapeJobs(
   page: Page,
@@ -52,49 +68,74 @@ export async function scrapeJobs(
 
   const searchUrl = `https://www.linkedin.com/jobs/search/?${params.toString()}`;
   await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await page.waitForTimeout(3_000); // let the results list render
 
-  const cardSelector =
-    '.scaffold-layout__list-item, .jobs-search-results__list-item, .job-card-container';
-  await page.waitForSelector(cardSelector, { timeout: 20_000 }).catch(() => undefined);
+  // Diagnostics: which card selector matches, and how many.
+  let cardSel = CARD_SELECTORS[0];
+  let best = 0;
+  for (const sel of CARD_SELECTORS) {
+    const count = await page.locator(sel).count().catch(() => 0);
+    console.log(`[scraper] card selector "${sel}" → ${count}`);
+    if (count > best) {
+      best = count;
+      cardSel = sel;
+    }
+  }
+  await page.screenshot({ path: 'linkedin-jobs-debug.png' }).catch(() => undefined);
+  console.log(`[scraper] using "${cardSel}" (${best} cards) at ${page.url()}`);
+  if (best === 0) return [];
 
-  const cards = await page.$$(cardSelector);
+  await autoScrollList(page, cardSel);
+
+  const total = Math.min(await page.locator(cardSel).count(), max);
   const results: ScrapedJob[] = [];
 
-  for (const card of cards.slice(0, max)) {
+  for (let i = 0; i < total; i++) {
     try {
-      await card.click();
-      await page.waitForTimeout(DETAIL_TIMEOUT_MS); // let the detail pane render
+      const card = page.locator(cardSel).nth(i);
+      await card.scrollIntoViewIfNeeded().catch(() => undefined);
+      await card.click({ timeout: 5_000 });
+      await page.waitForTimeout(DETAIL_WAIT_MS); // let the detail pane render
 
-      const title = await text(
-        page,
-        '.job-details-jobs-unified-top-card__job-title, .jobs-unified-top-card__job-title',
-      );
-      const company = await text(
-        page,
-        '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name',
-      );
-      const loc = await text(
-        page,
-        '.job-details-jobs-unified-top-card__primary-description-container, .jobs-unified-top-card__bullet',
-      );
-      const description = await text(page, '#job-details, .jobs-description__content');
-      const url = page.url();
+      const title = await text(page, TITLE_SELECTOR);
+      const company = await text(page, COMPANY_SELECTOR);
+      const loc = await text(page, LOCATION_SELECTOR);
+      const description = await text(page, DESC_SELECTOR);
 
       if (title && description.length >= 20) {
         results.push({
-          url,
+          url: page.url(),
           title,
           company,
           location: loc || undefined,
           description: description.slice(0, 6_000),
         });
+      } else {
+        console.log(
+          `[scraper] card ${i} skipped (title="${title.slice(0, 40)}" descLen=${description.length})`,
+        );
       }
-    } catch {
-      // Skip cards that fail to load; keep going.
+    } catch (err) {
+      console.log(`[scraper] card ${i} failed: ${String(err)}`);
     }
   }
 
+  console.log(`[scraper] extracted ${results.length}/${total} job(s)`);
   return results;
+}
+
+/** Scroll the last card into view repeatedly to trigger LinkedIn's lazy loading. */
+async function autoScrollList(page: Page, cardSel: string): Promise<void> {
+  for (let i = 0; i < 6; i++) {
+    const n = await page.locator(cardSel).count().catch(() => 0);
+    if (n === 0) break;
+    await page
+      .locator(cardSel)
+      .nth(n - 1)
+      .scrollIntoViewIfNeeded()
+      .catch(() => undefined);
+    await page.waitForTimeout(1_000);
+  }
 }
 
 async function text(page: Page, selector: string): Promise<string> {
