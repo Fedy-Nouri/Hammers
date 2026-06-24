@@ -32,6 +32,8 @@ agents/job-bot/dist/
 # Playwright
 agents/meeting-bot/playwright-report/
 agents/meeting-bot/test-results/
+agents/job-bot/.bot-profile/
+agents/job-bot/*-debug.png
 
 # OS
 .DS_Store
