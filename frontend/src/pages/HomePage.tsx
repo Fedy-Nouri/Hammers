@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Mic, Briefcase, Sparkles } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const agents = [
   {
@@ -8,18 +9,24 @@ const agents = [
     title: 'Meeting Copilot',
     description: 'Joins your Google Meet calls, transcribes them live, and delivers summaries, action items, and follow-up emails.',
     color: '#8b5cf6',
+    path: '/meetings',
   },
   {
     icon: Briefcase,
     title: 'Job Hunter',
     description: 'Finds jobs, scores them against your resume, drafts tailored cover letters, and tracks every application on a kanban board.',
     color: '#f59e0b',
+    path: '/jobs',
   },
 ]
 
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { accessToken } = useAuth()
+
+  // Logged-in users jump straight to the agent; everyone else is sent to sign in.
+  const openAgent = (path: string) => void navigate(accessToken ? path : '/login')
 
   return (
     <div className="relative overflow-hidden">
@@ -81,9 +88,13 @@ export default function HomePage() {
       {/* Agent cards */}
       <section className="relative max-w-7xl mx-auto px-6 pb-28">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl mx-auto">
-          {agents.map(({ icon: Icon, title, description, color }) => (
+          {agents.map(({ icon: Icon, title, description, color, path }) => (
             <div
               key={title}
+              role="button"
+              tabIndex={0}
+              onClick={() => openAgent(path)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAgent(path) } }}
               className="group rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:-translate-y-1"
               style={{
                 background: 'var(--color-surface-1)',
