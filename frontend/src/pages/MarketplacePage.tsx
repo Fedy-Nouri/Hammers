@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Mic, PenLine, Map, Briefcase, Zap, ArrowRight } from 'lucide-react'
+import { Search, Mic, PenLine, Map, Briefcase, Database, Zap, ArrowRight } from 'lucide-react'
 import { agentsApi } from '../lib/api/conversations'
 import type { Agent } from '../lib/api/conversations'
 
@@ -9,6 +9,7 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
   'content-generator': PenLine,
   'travel-agent': Map,
   'job-agent': Briefcase,
+  'data-analyst': Database,
 }
 
 const AGENT_COLORS: Record<string, string> = {
@@ -16,6 +17,7 @@ const AGENT_COLORS: Record<string, string> = {
   'content-generator': '#3b82f6',
   'travel-agent': '#10b981',
   'job-agent': '#f59e0b',
+  'data-analyst': '#06b6d4',
 }
 
 type FilterMode = 'all' | 'active'
