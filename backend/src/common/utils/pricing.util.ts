@@ -12,6 +12,10 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'claude-haiku-4-5-20251001': { input: 0.8, output: 4.0 },
   'claude-sonnet-4-6': { input: 3.0, output: 15.0 },
   'claude-opus-4-8': { input: 15.0, output: 75.0 },
+  // OpenRouter slugs (Data Analyst agent runs Claude via OpenRouter, DATA_ANALYST_MODEL)
+  'anthropic/claude-sonnet-4': { input: 3.0, output: 15.0 },
+  'anthropic/claude-3.5-sonnet': { input: 3.0, output: 15.0 },
+  'anthropic/claude-3.5-haiku': { input: 0.8, output: 4.0 },
 };
 
 export function computeCostUsd(
