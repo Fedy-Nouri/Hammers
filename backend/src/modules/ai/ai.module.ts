@@ -3,8 +3,10 @@ import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
 import { OpenAiProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
+import { DataAnalystModule } from '../data-analyst/data-analyst.module';
 
 @Module({
+  imports: [DataAnalystModule],
   controllers: [AiController],
   providers: [AiService, OpenAiProvider, AnthropicProvider],
   exports: [AiService],
