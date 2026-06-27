@@ -11,6 +11,13 @@ export const MAX_ATTEMPTS = 4;
 /** Default OpenRouter model slug for the analyst (overridable via DATA_ANALYST_MODEL). */
 export const DEFAULT_ANALYST_MODEL = 'anthropic/claude-sonnet-4';
 
+/**
+ * Cap on completion tokens per LLM call. SQL queries and the explanation are short, so a
+ * tight cap keeps cost (and the gateway's max_tokens affordability pre-check) sane instead
+ * of requesting the model's full completion window.
+ */
+export const ANALYST_MAX_OUTPUT_TOKENS = 1024;
+
 /** Postgres session GUC that the per-user views filter on. */
 export const USER_ID_GUC = 'app.current_user_id';
 

@@ -7,7 +7,7 @@ import { computeCostUsd } from '../../common/utils/pricing.util';
 import { SchemaService } from './schema.service';
 import { SqlExecutorService } from './sql-executor.service';
 import { buildAnalystGraph, type AnalystGraph, type AnalystStateType } from './analyst.graph';
-import { DEFAULT_ANALYST_MODEL } from './data-analyst.constants';
+import { ANALYST_MAX_OUTPUT_TOKENS, DEFAULT_ANALYST_MODEL } from './data-analyst.constants';
 
 /**
  * Drives the LangGraph analyst: turns a natural-language question into a validated answer
@@ -31,6 +31,7 @@ export class AnalystService {
     const llm = new ChatOpenAI({
       model: this.model,
       temperature: 0,
+      maxTokens: ANALYST_MAX_OUTPUT_TOKENS,
       apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY'),
       configuration: { baseURL: this.config.get<string>('OPENAI_BASE_URL') || undefined },
     });
