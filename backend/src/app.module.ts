@@ -22,6 +22,7 @@ import { ReportingModule } from './modules/reporting/reporting.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { JobScrapeModule } from './modules/job-scrape/job-scrape.module';
 import { DataAnalystModule } from './modules/data-analyst/data-analyst.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { DataAnalystModule } from './modules/data-analyst/data-analyst.module';
     JobsModule,
     JobScrapeModule,
     DataAnalystModule,
+    BillingModule,
   ],
 })
 export class AppModule {}
