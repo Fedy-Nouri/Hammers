@@ -21,6 +21,7 @@ import { AnalysisModule } from './modules/analysis/analysis.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { JobScrapeModule } from './modules/job-scrape/job-scrape.module';
+import { DataAnalystModule } from './modules/data-analyst/data-analyst.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { JobScrapeModule } from './modules/job-scrape/job-scrape.module';
     ReportingModule,
     JobsModule,
     JobScrapeModule,
+    DataAnalystModule,
   ],
 })
 export class AppModule {}

@@ -1,11 +1,74 @@
 import { useEffect, useRef } from 'react'
 import { Bot, User, Loader } from 'lucide-react'
+import ReactMarkdown, { type Components } from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Message } from '../../lib/api/conversations'
 
 interface Props {
   messages: Message[]
   streamingContent: string
   isStreaming: boolean
+}
+
+// GFM-aware markdown for assistant messages (SQL code blocks + result tables). Tailwind
+// here has no typography plugin, so each element is styled against the theme variables.
+const MD_COMPONENTS: Components = {
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-2">
+      <table className="border-collapse text-xs" style={{ border: '1px solid var(--color-border)' }}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th
+      className="px-2 py-1 text-left font-semibold"
+      style={{ border: '1px solid var(--color-border)', background: 'var(--color-surface-3)' }}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-2 py-1 align-top" style={{ border: '1px solid var(--color-border)' }}>
+      {children}
+    </td>
+  ),
+  pre: ({ children }) => (
+    <pre
+      className="my-2 p-3 rounded-lg overflow-x-auto text-xs"
+      style={{ background: 'var(--color-surface-3)', border: '1px solid var(--color-border)' }}
+    >
+      {children}
+    </pre>
+  ),
+  code: ({ className, children }) => {
+    if (className && /language-/.test(className)) return <code className={className}>{children}</code>
+    return (
+      <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-surface-3)' }}>
+        {children}
+      </code>
+    )
+  },
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noreferrer" style={{ color: 'var(--color-brand-400)', textDecoration: 'underline' }}>
+      {children}
+    </a>
+  ),
+  ul: ({ children }) => <ul className="list-disc ml-5 my-1 space-y-0.5">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal ml-5 my-1 space-y-0.5">{children}</ol>,
+  p: ({ children }) => <p className="my-1">{children}</p>,
+  h1: ({ children }) => <h1 className="text-base font-semibold my-1.5">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-sm font-semibold my-1.5">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-semibold my-1.5">{children}</h3>,
+  hr: () => <hr className="my-2" style={{ borderColor: 'var(--color-border)' }} />,
+}
+
+function Markdown({ children }: { children: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+      {children}
+    </ReactMarkdown>
+  )
 }
 
 function MessageBubble({ message }: { message: Message }) {
@@ -31,7 +94,7 @@ function MessageBubble({ message }: { message: Message }) {
 
       <div className={`max-w-[72%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
         <div
-          className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words"
+          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${isUser ? 'whitespace-pre-wrap' : ''}`}
           style={
             isUser
               ? {
@@ -47,7 +110,7 @@ function MessageBubble({ message }: { message: Message }) {
                 }
           }
         >
-          {message.content}
+          {isUser ? message.content : <Markdown>{message.content}</Markdown>}
         </div>
         <span className="text-xs px-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
           {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

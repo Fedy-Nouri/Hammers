@@ -3,18 +3,24 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import type { Response } from 'express';
 import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
 import { AiService } from './ai.service';
+import { AnalystService } from '../data-analyst/analyst.service';
 import { ChatDto } from './dto/chat.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
+const DATA_ANALYST_AGENT_ID = 'data-analyst';
+
 @ApiTags('ai')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly analyst: AnalystService,
+  ) {}
 
   @Post('chat')
   @HttpCode(HttpStatus.OK)
@@ -50,6 +56,22 @@ export class AiController {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
+
+    // Data Analyst conversations are handled by the LangGraph NL->SQL agent, streamed
+    // through the same SSE envelope; everything else uses the standard provider stream.
+    if (dto.agentId === DATA_ANALYST_AGENT_ID) {
+      const question = [...dto.messages].reverse().find((m) => m.role === 'user')?.content ?? '';
+      try {
+        for await (const chunk of this.analyst.stream(user.userId, question, dto.conversationId)) {
+          res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+        }
+      } catch {
+        res.write(`data: ${JSON.stringify({ error: 'Analyst error' })}\n\n`);
+      }
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
 
     try {
       for await (const chunk of this.aiService.chatStream(dto.messages, {

@@ -11,6 +11,13 @@ const AGENTS = [
       'Finds jobs, scores them against your resume, drafts tailored cover letters, and tracks your applications.',
     enabled: true,
   },
+  {
+    id: 'data-analyst',
+    name: 'Data Analyst',
+    description:
+      'Ask questions about your data in plain English — it writes and self-corrects read-only SQL across your jobs, meetings, conversations, and usage, then explains the results.',
+    enabled: true,
+  },
 ];
 
 async function main(): Promise<void> {
