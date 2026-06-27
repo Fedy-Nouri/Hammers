@@ -30,6 +30,7 @@ import { IngestJobDto } from './dto/ingest-job.dto';
 import { ListApplicationsQuery } from './dto/list-applications.query';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { QuotaGuard } from '../../common/guards/quota.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
@@ -85,6 +86,7 @@ export class JobsController {
   }
 
   @Post('ingest')
+  @UseGuards(QuotaGuard)
   @ApiOperation({ summary: 'Ingest a job and score it against the resume' })
   ingest(@CurrentUser() user: ActiveUser, @Body() dto: IngestJobDto) {
     return this.jobsService.ingest(user.userId, dto);
@@ -100,6 +102,7 @@ export class JobsController {
   }
 
   @Post('applications/:id/cover-letter')
+  @UseGuards(QuotaGuard)
   @ApiOperation({ summary: 'Generate (or regenerate) a tailored cover letter' })
   generateCoverLetter(@CurrentUser() user: ActiveUser, @Param('id') id: string) {
     return this.jobsService.generateCoverLetter(user.userId, id);

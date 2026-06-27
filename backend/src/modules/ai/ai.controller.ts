@@ -7,6 +7,7 @@ import { AnalystService } from '../data-analyst/analyst.service';
 import { ChatDto } from './dto/chat.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { QuotaGuard } from '../../common/guards/quota.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
@@ -24,7 +25,7 @@ export class AiController {
 
   @Post('chat')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, QuotaGuard)
   @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Send messages to the configured AI provider' })
   @ApiResponse({ status: 200, type: ChatResponseDto })
@@ -43,7 +44,7 @@ export class AiController {
 
   @Post('chat/stream')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, QuotaGuard)
   @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Stream AI response via SSE (text/event-stream)' })
   @ApiResponse({ status: 200, description: 'SSE stream of content chunks' })
