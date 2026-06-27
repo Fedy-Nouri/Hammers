@@ -98,14 +98,21 @@ export function validateSql(raw: string): string {
     }
   }
 
-  // Every FROM/JOIN target must be one of the allow-listed analyst_* views.
+  // Names introduced by WITH ... AS (...) are legitimate FROM/JOIN targets; their own
+  // definitions are still validated by the same FROM/JOIN check below.
+  const cteNames = new Set<string>();
+  for (const m of scan.matchAll(/(?:\bwith\b|,)\s+(?:recursive\s+)?("?)([a-z_]\w*)\1\s+as\s*\(/gi)) {
+    cteNames.add(m[2].toLowerCase());
+  }
+
+  // Every FROM/JOIN target must be an allow-listed analyst_* view or a CTE defined above.
   const refs = [...scan.matchAll(/\b(?:from|join)\s+("?)([a-z_][\w]*)\1/gi)];
   if (refs.length === 0) {
     throw new BadRequestException('Query must read from an analyst_* view.');
   }
   for (const m of refs) {
     const ident = m[2].toLowerCase();
-    if (!ANALYST_VIEW_SET.has(ident)) {
+    if (!ANALYST_VIEW_SET.has(ident) && !cteNames.has(ident)) {
       throw new BadRequestException(
         `Query may only reference analyst_* views, not "${m[2]}".`,
       );
