@@ -2,13 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity, ShieldAlert, Link2, Unlink } from 'lucide-react'
+import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity, ShieldAlert, Link2, Unlink, CreditCard, ArrowUpRight } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { usersApi } from '../lib/api/users'
 import { usageApi } from '../lib/api/usage'
 import { googleApi } from '../lib/api/google'
+import { billingApi } from '../lib/api/billing'
 import type { UsageSummary, UsageLog } from '../lib/api/usage'
+import type { BillingUsage } from '../lib/api/billing'
 import type { GoogleStatus } from '../lib/api/google'
 
 const infoSchema = z.object({
@@ -98,9 +100,53 @@ export default function ProfilePage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleBanner, setGoogleBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
+  const [billing, setBilling] = useState<BillingUsage | null>(null)
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMsg, setBillingMsg] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
   useEffect(() => {
     usageApi.getSummary(30).then(setSummary).catch(() => null)
   }, [])
+
+  useEffect(() => {
+    billingApi.getUsage().then(setBilling).catch(() => null)
+  }, [])
+
+  // Returning from Stripe Checkout: refetch (the webhook may lag a moment) and clear the param.
+  useEffect(() => {
+    const checkout = searchParams.get('checkout')
+    if (!checkout) return
+    if (checkout === 'success') {
+      setBillingMsg({ type: 'success', message: 'Subscription updated. Your new plan will appear shortly.' })
+      billingApi.getUsage().then(setBilling).catch(() => null)
+    }
+    searchParams.delete('checkout')
+    setSearchParams(searchParams, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  async function startCheckout(plan: 'pro' | 'enterprise') {
+    setBillingBusy(true)
+    setBillingMsg(null)
+    try {
+      const { url } = await billingApi.createCheckout(plan)
+      window.location.href = url
+    } catch {
+      setBillingBusy(false)
+      setBillingMsg({ type: 'error', message: 'Could not start checkout — billing may not be configured yet.' })
+    }
+  }
+
+  async function openPortal() {
+    setBillingBusy(true)
+    setBillingMsg(null)
+    try {
+      const { url } = await billingApi.createPortal()
+      window.location.href = url
+    } catch {
+      setBillingBusy(false)
+      setBillingMsg({ type: 'error', message: 'Could not open the billing portal — billing may not be configured yet.' })
+    }
+  }
 
   useEffect(() => {
     usageApi.getLogs(logsPage, LOGS_LIMIT).then((res) => {
@@ -457,6 +503,82 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Plan & Billing */}
+      {billing && (() => {
+        const plan = PLAN_LABELS[billing.plan] ?? PLAN_LABELS.free
+        const barColor = billing.exceeded ? '#ef4444' : billing.percent >= 80 ? '#f59e0b' : '#10b981'
+        const upgrades: ('pro' | 'enterprise')[] =
+          billing.plan === 'free' ? ['pro', 'enterprise'] : billing.plan === 'pro' ? ['enterprise'] : []
+        return (
+          <div
+            className="rounded-2xl p-6 mb-6"
+            style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <CreditCard size={15} style={{ color: 'var(--color-brand-400)' }} />
+              <h2 className="text-sm font-semibold text-white">Plan &amp; Billing</h2>
+              <span
+                className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ background: `${plan.color}20`, color: plan.color, border: `1px solid ${plan.color}40` }}
+              >
+                {plan.label}
+              </span>
+            </div>
+
+            {billingMsg && <StatusBanner type={billingMsg.type} message={billingMsg.message} />}
+
+            {/* Usage bar */}
+            <div className="flex items-center justify-between text-xs mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <span>Monthly AI usage</span>
+              <span>{formatCost(billing.usedUsd)} / {formatCost(billing.cap)}</span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-surface-3)' }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${Math.min(100, billing.percent)}%`, background: barColor }}
+              />
+            </div>
+            {billing.exceeded ? (
+              <p className="text-xs mt-2" style={{ color: '#f87171' }}>
+                You've reached your monthly limit — upgrade to keep using AI features.
+              </p>
+            ) : billing.percent >= 80 ? (
+              <p className="text-xs mt-2" style={{ color: '#fbbf24' }}>
+                You're at {billing.percent}% of your monthly limit.
+              </p>
+            ) : null}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2 mt-5">
+              {upgrades.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  disabled={billingBusy}
+                  onClick={() => void startCheckout(p)}
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, var(--color-brand-600), #3b82f6)' }}
+                >
+                  <ArrowUpRight size={14} />
+                  Upgrade to {PLAN_LABELS[p]?.label ?? p}
+                </button>
+              ))}
+              {billing.plan !== 'free' && (
+                <button
+                  type="button"
+                  disabled={billingBusy}
+                  onClick={() => void openPortal()}
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50"
+                  style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', color: 'rgba(255,255,255,0.8)' }}
+                >
+                  Manage subscription
+                </button>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Usage & Activity */}
       <div
