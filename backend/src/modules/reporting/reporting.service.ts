@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ActionItem, Decision, FollowUpEmail, Risk, TranscriptSegment } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { ChatMessage } from '../ai/providers/ai-provider.interface';
 import { UpdateEmailDto } from './dto/update-email.dto';
 
@@ -47,6 +48,7 @@ export class ReportingService {
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {
     this.providerName = this.config.get<string>('AI_ANALYSIS_PROVIDER') || undefined;
     this.model = this.config.get<string>('AI_ANALYSIS_MODEL') || undefined;
@@ -194,6 +196,27 @@ export class ReportingService {
         subject: dto.subject ?? undefined,
         body: dto.body ?? undefined,
       },
+    });
+  }
+
+  /** Send the (drafted, possibly edited) follow-up email to the meeting owner. */
+  async sendFollowUp(userId: string, meetingId: string): Promise<FollowUpEmail> {
+    const meeting = await this.prisma.meeting.findFirst({
+      where: { id: meetingId, userId },
+      select: { id: true, user: { select: { email: true } } },
+    });
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    const email = await this.prisma.followUpEmail.findUnique({ where: { meetingId } });
+    if (!email || !email.subject || !email.body) {
+      throw new BadRequestException('Follow-up email is not ready to send');
+    }
+
+    await this.notifications.sendMeetingFollowUp(meeting.user.email, email.subject, email.body, userId);
+
+    return this.prisma.followUpEmail.update({
+      where: { meetingId },
+      data: { status: 'sent' },
     });
   }
 
