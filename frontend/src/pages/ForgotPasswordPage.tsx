@@ -37,8 +37,10 @@ export default function ForgotPasswordPage() {
 
           {devToken && (
             <div className="w-full rounded-xl p-4 mb-6 text-left" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#fbbf24' }}>Dev mode — reset token</p>
-              <p className="text-xs font-mono break-all" style={{ color: 'rgba(255,255,255,0.6)' }}>{devToken}</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#fbbf24' }}>Dev mode — reset link</p>
+              <Link to={`/reset-password?token=${devToken}`} className="text-xs font-mono break-all underline" style={{ color: 'var(--color-brand-400)' }}>
+                Open reset page
+              </Link>
             </div>
           )}
 

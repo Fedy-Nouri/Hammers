@@ -10,6 +10,7 @@ const HomePage = lazy(() => import('../pages/HomePage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('../pages/DashboardPage'))
 const ProfilePage = lazy(() => import('../pages/ProfilePage'))
 const ChatPage = lazy(() => import('../pages/ChatPage'))
@@ -85,6 +86,7 @@ const router = createBrowserRouter([
       { path: 'login', element: wrap(LoginPage) },
       { path: 'register', element: wrap(RegisterPage) },
       { path: 'forgot-password', element: wrap(ForgotPasswordPage) },
+      { path: 'reset-password', element: wrap(ResetPasswordPage) },
     ],
   },
 ])
