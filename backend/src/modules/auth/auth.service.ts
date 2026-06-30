@@ -11,6 +11,7 @@ import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import {
@@ -28,6 +29,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -43,6 +45,8 @@ export class AuthService {
         lastName: dto.lastName,
       },
     });
+
+    void this.notifications.sendWelcome(user.email, user.firstName, user.id).catch(() => undefined);
 
     const tokens = await this.generateAndSaveTokens(user);
     return { ...tokens, user: this.toUserResponse(user) };
@@ -92,8 +96,10 @@ export class AuthService {
       data: { passwordResetToken: tokenHash, passwordResetExpiresAt: expiresAt },
     });
 
-    // In production: send email with reset link containing the raw token.
-    // For development: return the token directly in the response.
+    // Email the reset link (console-logged in dev when no provider is configured).
+    await this.notifications.sendPasswordReset(user.email, token, user.id);
+
+    // Dev convenience: also return the raw token so the flow is testable without a provider.
     const isDev = this.configService.get<string>('NODE_ENV') !== 'production';
     return {
       message: 'If that email exists, a reset link has been sent.',

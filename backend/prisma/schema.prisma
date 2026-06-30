@@ -396,3 +396,20 @@ model AiUsageLog {
   @@index([agentId])
   @@map("ai_usage_logs")
 }
+
+/// Audit + dedupe log for outbound email (NT-001). `status` = sent | failed | logged
+/// (logged = console driver when no provider is configured). `period` (e.g. "2026-06")
+/// scopes once-per-month notifications like the quota warning.
+model EmailLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  to        String
+  type      String
+  period    String?
+  status    String   @default("logged")
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, period])
+  @@map("email_logs")
+}

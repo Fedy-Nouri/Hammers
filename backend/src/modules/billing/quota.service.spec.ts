@@ -1,5 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PlanService } from './plan.service';
 import { QuotaService } from './quota.service';
 
@@ -16,7 +17,10 @@ function makeQuota(user: UserRow | null, sumCost: number | null) {
     user: { findUnique },
     aiUsageLog: { aggregate },
   } as unknown as PrismaService;
-  const quota = new QuotaService(prisma, new PlanService(prisma));
+  const notifications = {
+    maybeSendQuotaEmail: jest.fn().mockResolvedValue(undefined),
+  } as unknown as NotificationsService;
+  const quota = new QuotaService(prisma, new PlanService(prisma), notifications);
   return { quota, aggregate };
 }
 

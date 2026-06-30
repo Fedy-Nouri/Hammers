@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PlanService } from './plan.service';
 import type { PlanKey } from './plans';
 
@@ -32,6 +33,7 @@ export class QuotaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly plans: PlanService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async getUsage(userId: string): Promise<QuotaUsage> {
@@ -48,6 +50,13 @@ export class QuotaService {
 
   async assertWithinQuota(userId: string): Promise<void> {
     const usage = await this.getUsage(userId);
+
+    // Notify (once per month per type) when approaching or over the cap. Fire-and-forget so
+    // it never blocks or fails the AI request; only check when >=80% to avoid a per-request DB hit.
+    if (usage.percent >= 80) {
+      void this.notifications.maybeSendQuotaEmail(userId, usage).catch(() => undefined);
+    }
+
     if (usage.exceeded) {
       throw new HttpException(
         `Monthly AI usage limit reached for the ${usage.plan} plan ($${usage.cap.toFixed(2)}). Upgrade your plan to continue.`,
