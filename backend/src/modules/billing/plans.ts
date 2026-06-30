@@ -27,3 +27,15 @@ export const DEFAULT_PLAN: PlanKey = 'free';
 export function resolvePlanKey(plan: string | null | undefined): PlanKey {
   return plan === 'pro' || plan === 'enterprise' ? plan : 'free';
 }
+
+const PLAN_RANK: Record<PlanKey, number> = { free: 0, pro: 1, enterprise: 2 };
+
+/** Ordinal rank of a plan (free 0 < pro 1 < enterprise 2). */
+export function planRank(plan: string | null | undefined): number {
+  return PLAN_RANK[resolvePlanKey(plan)];
+}
+
+/** True when a user's plan is at least the required minimum plan. */
+export function meetsPlan(userPlan: string | null | undefined, minPlan: string | null | undefined): boolean {
+  return planRank(userPlan) >= planRank(minPlan);
+}
