@@ -64,7 +64,7 @@ export default function DashboardPage() {
     { label: 'Est. cost', value: summary ? (summary.totalCostUsd === 0 ? '$0.00' : `$${summary.totalCostUsd.toFixed(4)}`) : '—', icon: Zap },
   ]
 
-  const displayAgents = agents.length > 0 ? agents : []
+  const displayAgents = agents.filter((a) => a.installed)
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
@@ -105,8 +105,15 @@ export default function DashboardPage() {
           </button>
         </div>
         {displayAgents.length === 0 ? (
-          <div className="flex flex-col items-center py-10 gap-2 rounded-2xl" style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.25)' }}>No agents available</p>
+          <div className="flex flex-col items-center py-10 gap-3 rounded-2xl" style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.25)' }}>No agents installed yet</p>
+            <button
+              onClick={() => void navigate('/marketplace')}
+              className="text-xs font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+              style={{ color: 'var(--color-brand-400)' }}
+            >
+              Browse the marketplace <ArrowRight size={12} />
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

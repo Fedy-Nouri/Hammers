@@ -51,8 +51,13 @@ export interface Agent {
   name: string
   description: string | null
   enabled: boolean
+  minPlan?: string
+  installed?: boolean
+  allowed?: boolean
 }
 
 export const agentsApi = {
   list: () => api.get<Agent[]>('/agents').then((r) => r.data),
+  install: (id: string) => api.post<Agent>(`/agents/${id}/install`).then((r) => r.data),
+  uninstall: (id: string) => api.delete(`/agents/${id}/install`).then(() => undefined),
 }

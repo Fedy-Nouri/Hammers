@@ -26,6 +26,7 @@ export class AgentsService {
         name: dto.name,
         description: dto.description,
         enabled: dto.enabled ?? true,
+        ...(dto.minPlan && { minPlan: dto.minPlan }),
         configuration: (dto.configuration ?? {}) as object,
       },
     });
@@ -39,6 +40,7 @@ export class AgentsService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.enabled !== undefined && { enabled: dto.enabled }),
+        ...(dto.minPlan !== undefined && { minPlan: dto.minPlan }),
         ...(dto.configuration !== undefined && { configuration: dto.configuration as object }),
       },
     });

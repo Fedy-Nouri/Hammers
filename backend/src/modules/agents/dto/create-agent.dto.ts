@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsBoolean,
+  IsIn,
   IsOptional,
   IsObject,
   MinLength,
@@ -27,6 +28,11 @@ export class CreateAgentDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiPropertyOptional({ enum: ['free', 'pro', 'enterprise'], default: 'free' })
+  @IsOptional()
+  @IsIn(['free', 'pro', 'enterprise'])
+  minPlan?: 'free' | 'pro' | 'enterprise';
 
   @ApiPropertyOptional({ example: { model: 'gpt-4o-mini', systemPrompt: 'You are a travel expert.' } })
   @IsOptional()

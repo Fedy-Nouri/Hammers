@@ -30,6 +30,7 @@ model User {
   jobProfile        JobProfile?
   jobApplications   JobApplication[]
   jobScrapeJobs     JobScrapeJob[]
+  installedAgents   InstalledAgent[]
 
   @@map("users")
 }
@@ -246,13 +247,30 @@ model Agent {
   name          String
   description   String?
   enabled       Boolean  @default(true)
+  minPlan       String   @default("free")
   configuration Json     @default("{}")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   conversations Conversation[]
+  installs      InstalledAgent[]
 
   @@map("agents")
+}
+
+/// Per-user agent install (MK-001). Access to an agent = an install row AND the user's plan
+/// rank >= the agent's minPlan rank. Uninstalling removes access but never deletes history.
+model InstalledAgent {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, agentId])
+  @@map("installed_agents")
 }
 
 enum MessageRole {
