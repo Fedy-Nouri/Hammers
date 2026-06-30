@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { EntitlementService } from '../agents/entitlement.service';
 import type { CreateConversationDto } from './dto/create-conversation.dto';
 import type { CreateMessageDto } from './dto/create-message.dto';
 import type { PaginationQueryDto } from './dto/pagination-query.dto';
@@ -12,11 +13,14 @@ import type { MessageResponse } from './dto/message.response';
 
 @Injectable()
 export class ConversationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly entitlement: EntitlementService,
+  ) {}
 
   async create(userId: string, dto: CreateConversationDto): Promise<ConversationResponse> {
-    const agent = await this.prisma.agent.findUnique({ where: { id: dto.agentId } });
-    if (!agent) throw new NotFoundException(`Agent "${dto.agentId}" not found`);
+    // Gates the agent: 404 if missing/disabled, 403 if plan too low or not installed.
+    await this.entitlement.assertCanUse(userId, dto.agentId);
 
     return this.prisma.conversation.create({
       data: { userId, agentId: dto.agentId, title: dto.title ?? null },

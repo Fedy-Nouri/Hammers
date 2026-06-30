@@ -31,12 +31,15 @@ import { ListApplicationsQuery } from './dto/list-applications.query';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { QuotaGuard } from '../../common/guards/quota.guard';
+import { EntitlementGuard } from '../../common/guards/entitlement.guard';
+import { RequiresAgent } from '../../common/decorators/requires-agent.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('jobs')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, EntitlementGuard)
+@RequiresAgent('job-agent')
 @Controller('jobs')
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
