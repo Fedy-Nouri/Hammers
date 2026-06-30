@@ -13,6 +13,9 @@ export class AgentResponse {
   @ApiProperty({ example: true })
   enabled: boolean;
 
+  @ApiProperty({ enum: ['free', 'pro', 'enterprise'], example: 'free' })
+  minPlan: string;
+
   @ApiProperty({ example: {} })
   configuration: unknown;
 

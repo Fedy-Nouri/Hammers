@@ -18,21 +18,47 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { AgentsService } from './agents.service';
+import { EntitlementService, type AgentWithEntitlement } from './entitlement.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentResponse } from './dto/agent.response';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('agents')
 @Controller('agents')
 export class AgentsController {
-  constructor(private readonly agentsService: AgentsService) {}
+  constructor(
+    private readonly agentsService: AgentsService,
+    private readonly entitlement: EntitlementService,
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all agents' })
-  @ApiResponse({ status: 200, type: [AgentResponse] })
-  findAll(): Promise<AgentResponse[]> {
-    return this.agentsService.findAll();
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'List agents with the caller\'s install/allowed flags' })
+  findAll(@CurrentUser() user?: ActiveUser): Promise<AgentWithEntitlement[]> {
+    return this.entitlement.listForUser(user?.userId);
+  }
+
+  @Post(':id/install')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Install an agent for the current user' })
+  @ApiResponse({ status: 403, description: 'Plan does not allow this agent' })
+  install(@CurrentUser() user: ActiveUser, @Param('id') id: string): Promise<AgentWithEntitlement> {
+    return this.entitlement.install(user.userId, id);
+  }
+
+  @Delete(':id/install')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Uninstall an agent (history is preserved)' })
+  uninstall(@CurrentUser() user: ActiveUser, @Param('id') id: string): Promise<void> {
+    return this.entitlement.uninstall(user.userId, id);
   }
 
   @Get(':id')

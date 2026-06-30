@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsObject, MinLength } from 'class-validator';
+import { IsString, IsBoolean, IsIn, IsOptional, IsObject, MinLength } from 'class-validator';
 
 export class UpdateAgentDto {
   @ApiPropertyOptional()
@@ -17,6 +17,11 @@ export class UpdateAgentDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiPropertyOptional({ enum: ['free', 'pro', 'enterprise'] })
+  @IsOptional()
+  @IsIn(['free', 'pro', 'enterprise'])
+  minPlan?: 'free' | 'pro' | 'enterprise';
 
   @ApiPropertyOptional()
   @IsOptional()
