@@ -162,6 +162,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
+      role: user.role,
       createdAt: user.createdAt,
     };
   }

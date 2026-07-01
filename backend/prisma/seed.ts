@@ -29,6 +29,20 @@ async function main(): Promise<void> {
     });
     console.log(`Seeded agent: ${agent.id}`);
   }
+
+  // Promote the configured operator to admin (idempotent; no-op if the user doesn't exist yet).
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    const res = await prisma.user.updateMany({
+      where: { email: adminEmail },
+      data: { role: 'admin' },
+    });
+    console.log(
+      res.count > 0
+        ? `Promoted ${adminEmail} to admin`
+        : `ADMIN_EMAIL ${adminEmail} has no account yet — register it, then re-seed`,
+    );
+  }
 }
 
 main()
