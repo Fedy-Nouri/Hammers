@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authApi, type UserResponse } from '../lib/api/auth'
+import { usersApi } from '../lib/api/users'
 
 interface AuthState {
   user: UserResponse | null
@@ -42,10 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!refreshToken) { setState((s) => ({ ...s, isLoading: false })); return }
     try {
       const tokens = await authApi.refresh(refreshToken)
-      const cachedUser = localStorage.getItem(USER_KEY)
-      const user: UserResponse | null = cachedUser ? JSON.parse(cachedUser) as UserResponse : null
       sessionStorage.setItem('accessToken', tokens.accessToken)
       localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
+      // Refresh the user (incl. role/plan) so the console/nav reflect current state; fall back to cache.
+      const cachedUser = localStorage.getItem(USER_KEY)
+      const cached: UserResponse | null = cachedUser ? (JSON.parse(cachedUser) as UserResponse) : null
+      const user = await usersApi.getMe().catch(() => cached)
+      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user))
       setState({ user, accessToken: tokens.accessToken, isLoading: false })
     } catch {
       clearAuth()
