@@ -15,6 +15,7 @@ const DashboardPage = lazy(() => import('../pages/DashboardPage'))
 const ProfilePage = lazy(() => import('../pages/ProfilePage'))
 const ChatPage = lazy(() => import('../pages/ChatPage'))
 const MarketplacePage = lazy(() => import('../pages/MarketplacePage'))
+const AdminPage = lazy(() => import('../pages/AdminPage'))
 const MeetingsPage = lazy(() => import('../pages/MeetingsPage'))
 const MeetingMonitorPage = lazy(() => import('../pages/MeetingMonitorPage'))
 const MeetingDetailPage = lazy(() => import('../pages/MeetingDetailPage'))
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
           { path: 'chat', element: wrap(ChatPage) },
           { path: 'chat/:conversationId', element: wrap(ChatPage) },
           { path: 'marketplace', element: wrap(MarketplacePage) },
+          { path: 'admin', element: wrap(AdminPage) },
           {
             path: 'meetings',
             element: <MeetingBotLayout />,

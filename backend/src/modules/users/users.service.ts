@@ -18,6 +18,7 @@ export interface UserProfile {
   lastName: string | null;
   avatarUrl: string | null;
   subscriptionPlan: string;
+  role: string;
   createdAt: Date;
 }
 
@@ -38,6 +39,7 @@ export class UsersService {
       lastName: user.lastName,
       avatarUrl: user.avatarUrl,
       subscriptionPlan: user.subscriptionPlan,
+      role: user.role,
       createdAt: user.createdAt,
     };
   }

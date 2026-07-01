@@ -8,6 +8,7 @@ export interface UserResponse {
   lastName?: string
   avatarUrl?: string
   subscriptionPlan: string
+  role?: string
   createdAt: string
 }
 

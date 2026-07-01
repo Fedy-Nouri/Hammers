@@ -13,6 +13,9 @@ export class UserResponse {
   @ApiPropertyOptional()
   lastName?: string;
 
+  @ApiProperty({ enum: ['user', 'admin'], example: 'user' })
+  role: string;
+
   @ApiProperty()
   createdAt: Date;
 }

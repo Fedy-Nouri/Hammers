@@ -24,6 +24,7 @@ import { JobScrapeModule } from './modules/job-scrape/job-scrape.module';
 import { DataAnalystModule } from './modules/data-analyst/data-analyst.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     DataAnalystModule,
     BillingModule,
     NotificationsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

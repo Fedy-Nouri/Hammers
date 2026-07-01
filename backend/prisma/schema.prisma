@@ -21,6 +21,7 @@ model User {
   stripeCustomerId       String?   @unique
   subscriptionStatus     String?
   currentPeriodEnd       DateTime?
+  role                   String    @default("user")
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
