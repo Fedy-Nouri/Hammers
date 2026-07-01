@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 import {
   AdminService,
   type AdminMetrics,
@@ -41,7 +52,13 @@ export class AdminController {
 
   @Patch('users/:id')
   @ApiOperation({ summary: "Change a user's role (admin only)" })
-  setRole(@Param('id') id: string, @Body() dto: UpdateUserRoleDto): Promise<AdminUserRow> {
+  setRole(
+    @CurrentUser() user: ActiveUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ): Promise<AdminUserRow> {
+    // Prevent self-lockout: an admin cannot change their own role.
+    if (id === user.userId) throw new ForbiddenException('You cannot change your own role');
     return this.admin.setRole(id, dto.role);
   }
 }
