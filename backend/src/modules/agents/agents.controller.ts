@@ -24,6 +24,8 @@ import { UpdateAgentDto } from './dto/update-agent.dto';
 import { AgentResponse } from './dto/agent.response';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ActiveUser } from '../auth/strategies/jwt.strategy';
 
@@ -71,9 +73,10 @@ export class AgentsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new agent' })
+  @ApiOperation({ summary: 'Create a new agent (admin only)' })
   @ApiResponse({ status: 201, type: AgentResponse })
   @ApiResponse({ status: 409, description: 'Agent id already taken' })
   create(@Body() dto: CreateAgentDto): Promise<AgentResponse> {
@@ -81,9 +84,10 @@ export class AgentsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update agent metadata or status' })
+  @ApiOperation({ summary: 'Update agent metadata, status, or minPlan (admin only)' })
   @ApiParam({ name: 'id', example: 'travel-agent' })
   @ApiResponse({ status: 200, type: AgentResponse })
   @ApiResponse({ status: 404, description: 'Agent not found' })
@@ -92,10 +96,11 @@ export class AgentsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete an agent' })
+  @ApiOperation({ summary: 'Delete an agent (admin only)' })
   @ApiParam({ name: 'id', example: 'travel-agent' })
   @ApiResponse({ status: 204, description: 'Agent deleted' })
   @ApiResponse({ status: 404, description: 'Agent not found' })
