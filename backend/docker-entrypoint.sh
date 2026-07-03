@@ -8,4 +8,5 @@ echo "[entrypoint] Applying database migrations..."
 pnpm prisma:migrate:deploy
 
 echo "[entrypoint] Starting server..."
-exec node dist/main
+# nest build (sourceRoot: src) emits the entry at dist/src/main.js.
+exec node dist/src/main

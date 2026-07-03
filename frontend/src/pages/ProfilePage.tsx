@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { z } from 'zod'
 import { Camera, Check, AlertCircle, Eye, EyeOff, Lock, User, BarChart2, Zap, DollarSign, Activity, ShieldAlert, Link2, Unlink, CreditCard, ArrowUpRight } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -217,7 +217,7 @@ export default function ProfilePage() {
     handleSubmit,
     formState: { errors: infoErrors, isSubmitting: infoSubmitting },
   } = useForm<InfoValues>({
-    resolver: zodResolver(infoSchema),
+    resolver: standardSchemaResolver(infoSchema),
     defaultValues: {
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
@@ -230,7 +230,7 @@ export default function ProfilePage() {
     handleSubmit: handlePw,
     reset: resetPw,
     formState: { errors: pwErrors, isSubmitting: pwSubmitting },
-  } = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema) })
+  } = useForm<PasswordValues>({ resolver: standardSchemaResolver(passwordSchema) })
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

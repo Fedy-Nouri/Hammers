@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { z } from 'zod'
 import { ArrowLeft, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 import { authApi } from '../lib/api/auth'
@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string>()
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: standardSchemaResolver(schema),
   })
 
   const onSubmit = async (values: FormValues) => {

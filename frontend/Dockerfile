@@ -12,10 +12,7 @@ COPY . .
 # Set --build-arg VITE_API_URL=https://api.example.com for a split-origin deploy.
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
-# Uses `vite build` (not `pnpm build`) deliberately: the repo has a pre-existing
-# zod4 / @hookform/resolvers type-check break in the auth form pages that fails `tsc -b`
-# without affecting the emitted bundle. Tracked as separate frontend tech-debt.
-RUN pnpm exec vite build
+RUN pnpm build
 
 FROM nginx:alpine AS production
 COPY nginx.conf /etc/nginx/conf.d/default.conf
