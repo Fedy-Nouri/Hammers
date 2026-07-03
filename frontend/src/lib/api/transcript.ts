@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, API_BASE } from './client'
 import { readSSEData } from '../sse'
 
 export interface TranscriptSegment {
@@ -27,7 +27,7 @@ export async function* streamTranscript(
   signal: AbortSignal,
 ): AsyncGenerator<TranscriptSegment> {
   const token = sessionStorage.getItem('accessToken')
-  const response = await fetch(`/api/meetings/${meetingId}/transcript/stream`, {
+  const response = await fetch(`${API_BASE}/api/meetings/${meetingId}/transcript/stream`, {
     headers: { Authorization: `Bearer ${token ?? ''}` },
     signal,
   })

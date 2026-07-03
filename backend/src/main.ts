@@ -21,6 +21,22 @@ async function bootstrap(): Promise<void> {
 
   const configService = app.get(ConfigService);
 
+  // CORS: a comma-separated CORS_ORIGINS allowlist enables split-origin browser deploys
+  // (frontend served from its own domain). Unset → allow all in dev for convenience; in
+  // production, same-origin only (the nginx reverse-proxy setup needs no CORS headers).
+  const corsOrigins = configService.get<string>('CORS_ORIGINS');
+  if (corsOrigins) {
+    app.enableCors({
+      origin: corsOrigins
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+      credentials: true,
+    });
+  } else if (configService.get<string>('NODE_ENV') !== 'production') {
+    app.enableCors({ origin: true, credentials: true });
+  }
+
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Hammers API')
     .setDescription('AI Agent SaaS Platform API')
