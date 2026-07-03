@@ -219,12 +219,22 @@ npm run dev       # Start the bot service
 
 ### Full Docker Deployment
 
+Brings up the whole stack with one command — Postgres, Redis, the backend (which runs
+`prisma migrate deploy` on startup), and the nginx-served frontend:
+
 ```bash
-# Create .env at the repo root with the variables below
-docker-compose up --build
+cp backend/.env.example backend/.env   # then fill it in (JWT, API keys, ENCRYPTION_KEY, …)
+docker compose up --build
 ```
 
-Services: `postgres:5432`, `backend:3000`, `meeting-bot:3001`
+- **App:** http://localhost:8080 (nginx serves the SPA and reverse-proxies `/api` → backend)
+- **API:** http://localhost:3000/api · **health:** `GET /api/health` (liveness), `GET /api/health/ready` (DB)
+
+Services: `frontend:8080`, `backend:3000`, `postgres:5432`, `redis:6379`, plus the optional
+bot fleet (`meeting-bot`, `job-bot` — need account credentials). The backend reads its full
+config from `backend/.env`; DB credentials are overridable via `POSTGRES_USER` /
+`POSTGRES_PASSWORD` / `POSTGRES_DB`. For a split-origin deploy (SPA on its own domain), set
+`VITE_API_URL` (build arg) and the backend's `CORS_ORIGINS`.
 
 ---
 
@@ -250,6 +260,8 @@ Services: `postgres:5432`, `backend:3000`, `meeting-bot:3001`
 | `BOT_SERVICE_URL` | URL of the meeting-bot service (e.g. `http://localhost:3001`) |
 | `BOT_CALLBACK_SECRET` | Shared secret for authenticated bot → backend callbacks |
 | `PORT` | Backend port (default `3000`) |
+| `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (split-origin deploys). Empty = same-origin only in prod, allow-all in dev |
+| `ENABLE_SWAGGER` | Set `true` to expose `/api/docs` in production (hidden by default) |
 
 ### Meeting Bot (`agents/meeting-bot/.env`)
 
@@ -267,10 +279,12 @@ Services: `postgres:5432`, `backend:3000`, `meeting-bot:3001`
 
 ## API Reference
 
-Full interactive docs at `http://localhost:3000/api/docs`.
+Interactive docs at `http://localhost:3000/api/docs` (served outside production; set
+`ENABLE_SWAGGER=true` to expose them in production).
 
 | Group | Endpoints |
 |---|---|
+| **Health** | `GET /health` (liveness) · `GET /health/ready` (readiness, DB ping) |
 | **Auth** | `POST /auth/register` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/refresh` · `POST /auth/forgot-password` · `POST /auth/reset-password` |
 | **Users** | `GET /users/me` · `PATCH /users/me` · `DELETE /users/me` · `POST /users/me/avatar` · `POST /users/me/change-password` |
 | **Agents** | `GET /agents` · `POST /agents` · `GET /agents/:id` · `PATCH /agents/:id` · `DELETE /agents/:id` |

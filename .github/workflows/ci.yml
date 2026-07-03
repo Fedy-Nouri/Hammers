@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm --filter backend run prisma:generate
+      - name: Build
+        run: pnpm --filter backend run build
+      - name: Test
+        run: pnpm --filter backend run test
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build (bundle)
+        run: pnpm --filter frontend exec vite build
+      # Non-blocking: pre-existing zod4/@hookform/resolvers type-check break and
+      # react-hooks/set-state-in-effect lint errors in the auth form pages. Kept visible
+      # here; flip continue-on-error off once that frontend tech-debt is resolved.
+      - name: Type-check (non-blocking — pre-existing debt)
+        run: pnpm --filter frontend exec tsc -b
+        continue-on-error: true
+      - name: Lint (non-blocking — pre-existing debt)
+        run: pnpm --filter frontend run lint
+        continue-on-error: true
