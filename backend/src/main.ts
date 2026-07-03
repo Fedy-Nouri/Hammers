@@ -37,15 +37,22 @@ async function bootstrap(): Promise<void> {
     app.enableCors({ origin: true, credentials: true });
   }
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Hammers API')
-    .setDescription('AI Agent SaaS Platform API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  // Swagger is exposed in non-production, or anywhere ENABLE_SWAGGER=true is set. Keeping
+  // it off in production by default avoids leaking the full API surface at /api/docs.
+  const enableSwagger =
+    configService.get<string>('NODE_ENV') !== 'production' ||
+    configService.get<string>('ENABLE_SWAGGER') === 'true';
+  if (enableSwagger) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Hammers API')
+      .setDescription('AI Agent SaaS Platform API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);

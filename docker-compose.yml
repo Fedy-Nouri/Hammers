@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     container_name: hammers_postgres
     environment:
-      POSTGRES_USER: hammers
-      POSTGRES_PASSWORD: hammers
-      POSTGRES_DB: hammers_dev
+      POSTGRES_USER: ${POSTGRES_USER:-hammers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hammers}
+      POSTGRES_DB: ${POSTGRES_DB:-hammers_dev}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U hammers -d hammers_dev']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-hammers} -d ${POSTGRES_DB:-hammers_dev}']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -33,15 +33,17 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: hammers_backend
+    # The full secret/config surface (JWT, OpenAI/Anthropic, ENCRYPTION_KEY, Google,
+    # Stripe, Resend, bot secret, …) is supplied from ./backend/.env — copy .env.example
+    # and fill it in. The overrides below win over that file for the compose network.
+    env_file:
+      - ./backend/.env
     environment:
-      DATABASE_URL: "postgresql://hammers:hammers@postgres:5432/hammers_dev?schema=public&connection_limit=10"
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: 7d
+      # Compose-network overrides: target the service containers and force production mode.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-hammers}:${POSTGRES_PASSWORD:-hammers}@postgres:5432/${POSTGRES_DB:-hammers_dev}?schema=public&connection_limit=10"
+      REDIS_URL: redis://redis:6379
       PORT: 3000
       NODE_ENV: production
-      REDIS_URL: redis://redis:6379
-      BOT_CALLBACK_SECRET: ${BOT_CALLBACK_SECRET}
-      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING:-}
     ports:
       - '3000:3000'
     depends_on:
@@ -55,6 +57,22 @@ services:
       timeout: 5s
       retries: 6
       start_period: 20s
+
+  # SPA served by nginx, reverse-proxying /api + /uploads to the backend (same origin).
+  # Browse the app at http://localhost:8080. Leave VITE_API_URL empty for this proxied
+  # setup; set it only for a split-origin deploy where the SPA lives on another domain.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    container_name: hammers_frontend
+    ports:
+      - '8080:80'
+    depends_on:
+      backend:
+        condition: service_healthy
 
   # Bot fleet — one container per Google account (SC-003). Each self-registers
   # with the backend and joins one meeting at a time. Add capacity by copying a
