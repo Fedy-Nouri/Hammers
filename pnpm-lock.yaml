@@ -125,6 +125,9 @@ importers:
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
+      prisma:
+        specifier: ^6.19.3
+        version: 6.19.3(typescript@5.9.3)
       react-hook-form:
         specifier: ^7.79.0
         version: 7.79.0(react@19.2.7)
@@ -207,9 +210,6 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.8.4
-      prisma:
-        specifier: ^6.19.3
-        version: 6.19.3(typescript@5.9.3)
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21

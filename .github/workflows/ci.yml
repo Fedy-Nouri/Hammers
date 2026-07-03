@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm --filter backend run prisma:generate
+      - name: Build
+        run: pnpm --filter backend run build
+      - name: Test
+        run: pnpm --filter backend run test
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build (type-check + bundle)
+        run: pnpm --filter frontend run build
+      # Non-blocking: pre-existing react-hooks/set-state-in-effect errors in chat, meeting
+      # and profile pages. Kept visible here; flip continue-on-error off once resolved.
+      - name: Lint (non-blocking — pre-existing react-hooks debt)
+        run: pnpm --filter frontend run lint
+        continue-on-error: true

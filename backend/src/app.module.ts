@@ -25,6 +25,7 @@ import { DataAnalystModule } from './modules/data-analyst/data-analyst.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AdminModule } from './modules/admin/admin.module';
     BillingModule,
     NotificationsModule,
     AdminModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

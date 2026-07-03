@@ -9,6 +9,7 @@ import ChatInput from '../components/chat/ChatInput'
 import type { AttachedFile } from '../components/chat/ChatInput'
 import { useAuth } from '../contexts/AuthContext'
 import { readSSEData } from '../lib/sse'
+import { API_BASE } from '../lib/api/client'
 
 function buildMessageContent(text: string, files: AttachedFile[]): string {
   if (files.length === 0) return text
@@ -165,7 +166,7 @@ export default function ChatPage() {
     let finalContent = ''
 
     try {
-      const response = await fetch('/api/ai/chat/stream', {
+      const response = await fetch(`${API_BASE}/api/ai/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
