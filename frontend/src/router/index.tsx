@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
+import ErrorBoundary from '../components/ErrorBoundary'
 import AuthLayout from '../components/layout/AuthLayout'
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import MeetingBotLayout from '../components/layout/MeetingBotLayout'
@@ -94,5 +95,9 @@ const router = createBrowserRouter([
 ])
 
 export default function AppRouter() {
-  return <RouterProvider router={router} />
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  )
 }

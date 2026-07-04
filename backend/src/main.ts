@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap(): Promise<void> {
   // rawBody captures the unparsed request body (req.rawBody) needed for Stripe webhook
@@ -18,6 +19,9 @@ async function bootstrap(): Promise<void> {
       transform: true,
     }),
   );
+
+  // Consistent JSON error bodies + logging for unexpected errors (safe for SSE — see filter).
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const configService = app.get(ConfigService);
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { validate } from './config/env.validation';
 import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import { Redis } from 'ioredis';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -29,7 +30,7 @@ import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate }),
     ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,
