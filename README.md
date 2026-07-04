@@ -171,6 +171,21 @@ User ──┬── GoogleIntegration   (OAuth tokens, AES-256-GCM encrypted, s
 - Deepgram API key
 - Anthropic and/or OpenAI API keys
 
+### Quick start — everything in one command
+
+Once each package has its `.env` (see below), start postgres + redis (Docker) and the
+backend, frontend, and both agents together, with labeled logs. Ctrl+C stops all of them:
+
+```bash
+pnpm install
+pnpm dev                 # backend + frontend + meeting-bot + job-bot + infra
+pnpm dev -- --no-bots    # backend + frontend only
+pnpm dev -- --no-infra   # assume postgres/redis are already running
+```
+
+App: `http://localhost:5173` · API: `http://localhost:3000`. The steps below run each
+service individually instead.
+
 ### 1. Start the database
 
 ```bash
