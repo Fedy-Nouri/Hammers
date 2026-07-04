@@ -43,22 +43,19 @@ importers:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: ^0.104.2
-        version: 0.104.2(zod@4.4.3)
+        version: 0.104.2(zod@3.25.76)
       '@azure/storage-blob':
         specifier: ^12.32.0
         version: 12.32.0
-      '@hookform/resolvers':
-        specifier: ^5.4.0
-        version: 5.4.0(react-hook-form@7.79.0(react@19.2.7))
       '@langchain/core':
         specifier: ^0.3.80
-        version: 0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
+        version: 0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
       '@langchain/langgraph':
         specifier: ^0.4.9
-        version: 0.4.9(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod-to-json-schema@3.25.2(zod@4.4.3))
+        version: 0.4.9(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod-to-json-schema@3.25.2(zod@3.25.76))
       '@langchain/openai':
         specifier: ^0.3.17
-        version: 0.3.17(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(ws@8.21.0)
+        version: 0.3.17(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(ws@8.21.0)
       '@nestjs/axios':
         specifier: ^4.0.1
         version: 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.0)(rxjs@7.8.2)
@@ -104,9 +101,6 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
-      graphql:
-        specifier: ^16.14.2
-        version: 16.14.2
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
@@ -115,7 +109,7 @@ importers:
         version: 2.2.0
       openai:
         specifier: ^6.42.0
-        version: 6.42.0(ws@8.21.0)(zod@4.4.3)
+        version: 6.42.0(ws@8.21.0)(zod@3.25.76)
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -128,9 +122,6 @@ importers:
       prisma:
         specifier: ^6.19.3
         version: 6.19.3(typescript@5.9.3)
-      react-hook-form:
-        specifier: ^7.79.0
-        version: 7.79.0(react@19.2.7)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -146,9 +137,6 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.2.1)
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.2.0
@@ -3018,10 +3006,6 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  graphql@16.14.2:
-    resolution: {integrity: sha512-Chq1s4CY7jmh8gO2qvLIJyfCDIN+EHLFW/9iShnp1z8FjBQMoodWP1kDC36VAMXXIvAjj4ARa7ntfAV2BrjsbA==}
-    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
-
   handlebars@4.7.9:
     resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
     engines: {node: '>=0.4.7'}
@@ -5154,12 +5138,12 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@anthropic-ai/sdk@0.104.2(zod@4.4.3)':
+  '@anthropic-ai/sdk@0.104.2(zod@3.25.76)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0
     optionalDependencies:
-      zod: 4.4.3
+      zod: 3.25.76
 
   '@azure/abort-controller@2.1.2':
     dependencies:
@@ -5976,14 +5960,14 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))':
+  '@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.87(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
+      langsmith: 0.3.87(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -5996,38 +5980,38 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/langgraph-checkpoint@0.1.1(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))':
+  '@langchain/langgraph-checkpoint@0.1.1(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))':
     dependencies:
-      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
+      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.1.10(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@langchain/langgraph-sdk@0.1.10(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 9.0.1
     optionalDependencies:
-      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
+      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  '@langchain/langgraph@0.4.9(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod-to-json-schema@3.25.2(zod@4.4.3))':
+  '@langchain/langgraph@0.4.9(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod-to-json-schema@3.25.2(zod@3.25.76))':
     dependencies:
-      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
-      '@langchain/langgraph-checkpoint': 0.1.1(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))
-      '@langchain/langgraph-sdk': 0.1.10(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
+      '@langchain/langgraph-checkpoint': 0.1.1(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))
+      '@langchain/langgraph-sdk': 0.1.10(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
-      zod-to-json-schema: 3.25.2(zod@4.4.3)
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@langchain/openai@0.3.17(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3)))(ws@8.21.0)':
+  '@langchain/openai@0.3.17(@langchain/core@0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76)))(ws@8.21.0)':
     dependencies:
-      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@4.4.3))
+      '@langchain/core': 0.3.80(openai@6.42.0(ws@8.21.0)(zod@3.25.76))
       js-tiktoken: 1.0.21
       openai: 4.104.0(ws@8.21.0)(zod@3.25.76)
       zod: 3.25.76
@@ -8174,8 +8158,6 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql@16.14.2: {}
-
   handlebars@4.7.9:
     dependencies:
       minimist: 1.2.8
@@ -8806,7 +8788,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  langsmith@0.3.87(openai@6.42.0(ws@8.21.0)(zod@4.4.3)):
+  langsmith@0.3.87(openai@6.42.0(ws@8.21.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -8815,7 +8797,7 @@ snapshots:
       semver: 7.8.4
       uuid: 10.0.0
     optionalDependencies:
-      openai: 6.42.0(ws@8.21.0)(zod@4.4.3)
+      openai: 6.42.0(ws@8.21.0)(zod@3.25.76)
 
   leven@3.1.0: {}
 
@@ -9448,10 +9430,10 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@6.42.0(ws@8.21.0)(zod@4.4.3):
+  openai@6.42.0(ws@8.21.0)(zod@3.25.76):
     optionalDependencies:
       ws: 8.21.0
-      zod: 4.4.3
+      zod: 3.25.76
 
   optionator@0.9.4:
     dependencies:
@@ -10595,11 +10577,6 @@ snapshots:
   zod-to-json-schema@3.25.2(zod@3.25.76):
     dependencies:
       zod: 3.25.76
-
-  zod-to-json-schema@3.25.2(zod@4.4.3):
-    dependencies:
-      zod: 4.4.3
-    optional: true
 
   zod-validation-error@4.0.2(zod@4.4.3):
     dependencies:
