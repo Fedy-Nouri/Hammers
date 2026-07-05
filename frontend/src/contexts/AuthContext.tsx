@@ -21,7 +21,13 @@ const REFRESH_TOKEN_KEY = 'refreshToken'
 const USER_KEY = 'authUser'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({ user: null, accessToken: null, isLoading: true })
+  // isLoading starts true only when there's a refresh token to restore — otherwise the
+  // bootstrap effect has nothing to do and must not setState synchronously.
+  const [state, setState] = useState<AuthState>(() => ({
+    user: null,
+    accessToken: null,
+    isLoading: !!localStorage.getItem(REFRESH_TOKEN_KEY),
+  }))
 
   const setAuth = (accessToken: string, refreshToken: string, user: UserResponse) => {
     sessionStorage.setItem('accessToken', accessToken)
@@ -40,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Restore session on mount via refresh token
   const bootstrap = useCallback(async () => {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-    if (!refreshToken) { setState((s) => ({ ...s, isLoading: false })); return }
+    if (!refreshToken) return // isLoading already false (see lazy init above)
     try {
       const tokens = await authApi.refresh(refreshToken)
       sessionStorage.setItem('accessToken', tokens.accessToken)
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: restore session from the refresh token on mount
   useEffect(() => { void bootstrap() }, [bootstrap])
 
   const login = async (email: string, password: string) => {
@@ -88,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its provider
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

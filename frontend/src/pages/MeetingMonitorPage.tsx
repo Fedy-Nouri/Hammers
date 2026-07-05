@@ -155,6 +155,7 @@ export default function MeetingMonitorPage() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: load dashboard on mount
     void loadDashboard(false)
     const refreshId = setInterval(() => void loadDashboard(true), 30_000)
     return () => clearInterval(refreshId)

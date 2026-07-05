@@ -117,6 +117,7 @@ export default function ProfilePage() {
     const checkout = searchParams.get('checkout')
     if (!checkout) return
     if (checkout === 'success') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: banner on return from Stripe Checkout
       setBillingMsg({ type: 'success', message: 'Subscription updated. Your new plan will appear shortly.' })
       billingApi.getUsage().then(setBilling).catch(() => null)
     }
@@ -129,7 +130,7 @@ export default function ProfilePage() {
     setBillingMsg(null)
     try {
       const { url } = await billingApi.createCheckout(plan)
-      window.location.href = url
+      window.location.assign(url)
     } catch {
       setBillingBusy(false)
       setBillingMsg({ type: 'error', message: 'Could not start checkout — billing may not be configured yet.' })
@@ -141,7 +142,7 @@ export default function ProfilePage() {
     setBillingMsg(null)
     try {
       const { url } = await billingApi.createPortal()
-      window.location.href = url
+      window.location.assign(url)
     } catch {
       setBillingBusy(false)
       setBillingMsg({ type: 'error', message: 'Could not open the billing portal — billing may not be configured yet.' })
@@ -163,6 +164,7 @@ export default function ProfilePage() {
     const param = searchParams.get('google')
     if (!param) return
     if (param === 'connected') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: banner on return from Google OAuth
       setGoogleBanner({ type: 'success', message: 'Google account connected successfully.' })
       googleApi.getStatus().then(setGoogleStatus).catch(() => null)
     } else if (param === 'error') {
