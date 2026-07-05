@@ -41,8 +41,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build (type-check + bundle)
         run: pnpm --filter frontend run build
-      # Non-blocking: pre-existing react-hooks/set-state-in-effect errors in chat, meeting
-      # and profile pages. Kept visible here; flip continue-on-error off once resolved.
-      - name: Lint (non-blocking — pre-existing react-hooks debt)
+      - name: Lint
         run: pnpm --filter frontend run lint
-        continue-on-error: true

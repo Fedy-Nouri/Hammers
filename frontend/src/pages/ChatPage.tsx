@@ -74,6 +74,7 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: load conversations on mount
     void fetchConversations()
     agentsApi.list().then(setAgents).catch(() => setAgents([]))
   }, [fetchConversations])
@@ -91,12 +92,9 @@ export default function ChatPage() {
   }, [searchParams, conversationId, navigate])
 
   useEffect(() => {
-    if (conversationId) {
-      setMessages([])
-      void fetchMessages(conversationId)
-    } else {
-      setMessages([])
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset messages when the active conversation changes
+    setMessages([])
+    if (conversationId) void fetchMessages(conversationId)
   }, [conversationId, fetchMessages])
 
   async function createConversation(agentId: string) {

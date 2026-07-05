@@ -268,6 +268,7 @@ export default function MeetingsPage() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: (re)load meetings when the view tab changes
     void loadMeetings(view)
   }, [view, loadMeetings])
 

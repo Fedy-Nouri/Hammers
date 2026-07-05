@@ -146,6 +146,7 @@ export default function MeetingDetailPage() {
   }, [id])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: load meeting data on mount
     void loadMeeting()
     void loadStored()
     void loadAnalysis()
