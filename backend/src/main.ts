@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -9,6 +10,12 @@ async function bootstrap(): Promise<void> {
   // rawBody captures the unparsed request body (req.rawBody) needed for Stripe webhook
   // signature verification, while JSON parsing still works for every other route.
   const app = await NestFactory.create(AppModule, { rawBody: true });
+
+  // Secure HTTP response headers (HSTS, X-Content-Type-Options: nosniff, frameguard,
+  // Referrer-Policy, etc.). CSP is disabled here: this app serves JSON + the Swagger UI
+  // (whose inline assets a default CSP would break), and the SPA's document-level CSP is
+  // owned by the nginx layer that serves the HTML.
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   app.setGlobalPrefix('api');
 
