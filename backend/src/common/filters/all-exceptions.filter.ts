@@ -14,6 +14,7 @@ interface ErrorBody {
   message: string | string[];
   path: string;
   timestamp: string;
+  requestId?: string;
 }
 
 /**
@@ -34,11 +35,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const isHttp = exception instanceof HttpException;
     const status = isHttp ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const requestId = request.requestId;
 
     // Log unexpected errors (anything that isn't a deliberate HttpException, or any 5xx).
+    // The request id ties this back to the access-log line from the request logger.
     if (!isHttp || status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
-        `${request.method} ${request.url} -> ${status}`,
+        `[${requestId ?? '-'}] ${request.method} ${request.url} -> ${status}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
     }
@@ -54,6 +57,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       path: request.url,
       timestamp: new Date().toISOString(),
+      ...(requestId && { requestId }),
     };
     response.status(status).json(body);
   }

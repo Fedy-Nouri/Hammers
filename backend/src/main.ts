@@ -4,11 +4,16 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { requestLogger } from './common/middleware/request-logger.middleware';
 
 async function bootstrap(): Promise<void> {
   // rawBody captures the unparsed request body (req.rawBody) needed for Stripe webhook
   // signature verification, while JSON parsing still works for every other route.
   const app = await NestFactory.create(AppModule, { rawBody: true });
+
+  // Correlation id + structured access logging for every request (before routing so 404s
+  // and errors are covered too).
+  app.use(requestLogger);
 
   app.setGlobalPrefix('api');
 
