@@ -5,11 +5,10 @@ import {
   Headers,
   HttpCode,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
+import { Throttle, seconds } from '@nestjs/throttler';
 import { TranscriptService } from './transcript.service';
 import { IngestTranscriptDto } from './dto/ingest-transcript.dto';
 
@@ -23,7 +22,6 @@ export class TranscriptIngestController {
 
   @Post('transcript')
   @HttpCode(200)
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 3000, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Internal bot transcript ingest' })
   async ingest(

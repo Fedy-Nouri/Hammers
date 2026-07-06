@@ -1,5 +1,6 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
 interface LivenessResult {
@@ -14,6 +15,8 @@ interface ReadinessResult {
 }
 
 @ApiTags('health')
+// Orchestrator probes (Docker/k8s) poll these frequently and must never be rate-limited.
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
