@@ -69,7 +69,8 @@ services:
         VITE_API_URL: ${VITE_API_URL:-}
     container_name: hammers_frontend
     ports:
-      - '8080:80'
+      # Container listens on 8080 (unprivileged nginx runs as non-root).
+      - '8080:8080'
     depends_on:
       backend:
         condition: service_healthy

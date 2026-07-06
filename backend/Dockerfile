@@ -27,6 +27,10 @@ COPY --from=builder /app/prisma ./prisma
 RUN pnpm prisma:generate
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
+# Drop root: the node:alpine image ships a non-root `node` user (uid 1000). Everything the
+# runtime touches (dist, prisma engines in node_modules, migrate deploy over the network) is
+# world-readable and needs no write access, so the server runs unprivileged.
+USER node
 EXPOSE 3000
-# Entrypoint runs `prisma migrate deploy`, then `node dist/main`.
+# Entrypoint runs `prisma migrate deploy`, then `node dist/src/main`.
 ENTRYPOINT ["./docker-entrypoint.sh"]
