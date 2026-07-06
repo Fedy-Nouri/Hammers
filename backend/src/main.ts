@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
@@ -12,6 +13,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
+
+  // Secure HTTP response headers (HSTS, X-Content-Type-Options: nosniff, frameguard,
+  // Referrer-Policy, etc.). CSP is disabled here: this app serves JSON + the Swagger UI
+  // (whose inline assets a default CSP would break), and the SPA's document-level CSP is
+  // owned by the nginx layer that serves the HTML.
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   app.setGlobalPrefix('api');
 
