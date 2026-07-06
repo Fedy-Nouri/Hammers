@@ -10,6 +10,7 @@ import {
   type RawBodyRequest,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type Stripe from 'stripe';
 import { StripeService } from './stripe.service';
@@ -27,6 +28,9 @@ export class BillingWebhookController {
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
+  // Stripe delivers (and retries) webhooks from its own IPs; a shared per-IP limit could drop
+  // legitimate events. Signature verification already gates this endpoint, so skip throttling.
+  @SkipThrottle()
   @ApiExcludeEndpoint()
   async handle(
     @Req() req: RawBodyRequest<Request>,

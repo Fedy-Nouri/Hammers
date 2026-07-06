@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { validate } from './config/env.validation';
-import { ThrottlerModule, seconds } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule, seconds } from '@nestjs/throttler';
 import { Redis } from 'ioredis';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
@@ -61,6 +62,13 @@ import { HealthModule } from './modules/health/health.module';
     NotificationsModule,
     AdminModule,
     HealthModule,
+  ],
+  providers: [
+    // Rate-limit every route by default (100 req / 60s per client). Individual routes
+    // override the limit with @Throttle(), or opt out with @SkipThrottle(). Registering
+    // the guard here — rather than per-controller @UseGuards — means new controllers are
+    // protected automatically and requests are counted exactly once.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -8,9 +9,24 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 async function bootstrap(): Promise<void> {
   // rawBody captures the unparsed request body (req.rawBody) needed for Stripe webhook
   // signature verification, while JSON parsing still works for every other route.
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   app.setGlobalPrefix('api');
+
+  const configService = app.get(ConfigService);
+
+  // Behind a reverse proxy (the nginx image forwards X-Forwarded-For), Express must be told to
+  // trust it so req.ip reflects the real client — otherwise the global rate limiter buckets every
+  // request under the proxy's IP and throttles all users together. Off by default so a directly
+  // exposed app can't be spoofed via a forged X-Forwarded-For header. Set TRUST_PROXY to the hop
+  // count (e.g. 1 for a single nginx) or "true" in the reverse-proxy deployment.
+  const trustProxy = configService.get<string>('TRUST_PROXY');
+  if (trustProxy) {
+    const hops = Number(trustProxy);
+    app.set('trust proxy', Number.isNaN(hops) ? trustProxy : hops);
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,8 +38,6 @@ async function bootstrap(): Promise<void> {
 
   // Consistent JSON error bodies + logging for unexpected errors (safe for SSE — see filter).
   app.useGlobalFilters(new AllExceptionsFilter());
-
-  const configService = app.get(ConfigService);
 
   // CORS: a comma-separated CORS_ORIGINS allowlist enables split-origin browser deploys
   // (frontend served from its own domain). Unset → allow all in dev for convenience; in

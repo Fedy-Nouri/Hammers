@@ -5,11 +5,10 @@ import {
   Headers,
   HttpCode,
   Patch,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { Throttle, ThrottlerGuard, seconds } from '@nestjs/throttler';
+import { Throttle, seconds } from '@nestjs/throttler';
 import { JobScrapeLauncherService } from './job-scrape-launcher.service';
 import { ScrapeCallbackDto } from './dto/scrape-bot.dto';
 
@@ -23,7 +22,6 @@ export class ScrapeCallbackController {
 
   @Patch('callback')
   @HttpCode(200)
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   @ApiOperation({ summary: 'Internal: job-bot scrape status callback' })
   async callback(
