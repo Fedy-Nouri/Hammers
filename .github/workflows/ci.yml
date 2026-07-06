@@ -25,6 +25,8 @@ jobs:
         run: pnpm --filter backend run build
       - name: Test
         run: pnpm --filter backend run test
+      - name: E2E test
+        run: pnpm --filter backend run test:e2e
 
   frontend:
     name: Frontend (build)
