@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { requestLogger } from './common/middleware/request-logger.middleware';
 
 async function bootstrap(): Promise<void> {
   // rawBody captures the unparsed request body (req.rawBody) needed for Stripe webhook
@@ -19,6 +20,10 @@ async function bootstrap(): Promise<void> {
   // (whose inline assets a default CSP would break), and the SPA's document-level CSP is
   // owned by the nginx layer that serves the HTML.
   app.use(helmet({ contentSecurityPolicy: false }));
+
+  // Correlation id + structured access logging for every request (before routing so 404s
+  // and errors are covered too).
+  app.use(requestLogger);
 
   app.setGlobalPrefix('api');
 
