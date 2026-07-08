@@ -14,8 +14,13 @@ ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm build
 
-FROM nginx:alpine AS production
+# Unprivileged nginx: runs as the non-root `nginx` user (uid 101) and listens on 8080
+# (a non-privileged port), with pid/temp paths already writable by that user.
+FROM nginxinc/nginx-unprivileged:alpine AS production
+# COPY needs root to write into /etc/nginx and the web root; drop back to nginx to run.
+USER root
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 80
+USER nginx
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
