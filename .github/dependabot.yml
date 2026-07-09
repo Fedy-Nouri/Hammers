@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  # ── JavaScript / TypeScript ────────────────────────────────────────────────
+  # The root pnpm workspace (pnpm-lock.yaml) drives backend + frontend. The two
+  # bot agents ship from their own package-lock.json (their Dockerfiles run
+  # `npm ci`), so their lockfiles are tracked separately here.
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/agents/job-bot"
+      - "/agents/meeting-bot"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # Collapse the low-risk minor/patch bumps into one PR to cut review noise;
+      # major bumps still come as individual PRs so they get proper scrutiny.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ── Dockerfile base images (node:20-alpine, nginx, …) ──────────────────────
+  - package-ecosystem: "docker"
+    directories:
+      - "/backend"
+      - "/frontend"
+      - "/agents/job-bot"
+      - "/agents/meeting-bot"
+    schedule:
+      interval: "weekly"
+
+  # ── GitHub Actions pinned in the workflows ─────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
