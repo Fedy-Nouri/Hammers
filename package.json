@@ -2,6 +2,7 @@
   "name": "hammers",
   "version": "1.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "bash scripts/dev.sh",
     "dev:backend": "pnpm --filter backend dev",
