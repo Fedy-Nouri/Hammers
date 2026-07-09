@@ -33,7 +33,7 @@
     "@azure/storage-blob": "^12.32.0",
     "@langchain/core": "^0.3.80",
     "@langchain/langgraph": "^0.4.9",
-    "@langchain/openai": "^0.3.17",
+    "@langchain/openai": "^1.5.5",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
