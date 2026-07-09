@@ -1,5 +1,5 @@
 # Build the SPA, then serve it with nginx (SPA fallback + reverse-proxy to the backend).
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 RUN npm install -g pnpm
 # Self-contained install: this package has no workspace-protocol deps, and the monorepo
