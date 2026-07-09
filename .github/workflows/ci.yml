@@ -96,14 +96,14 @@ jobs:
       # Build both production images so a broken Dockerfile fails CI instead of the deploy.
       # push=false — this only validates the build; gha cache keeps reruns fast.
       - name: Build backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: false
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
       - name: Build frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           push: false
