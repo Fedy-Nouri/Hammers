@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 # openssl: Prisma needs it to generate the client on Alpine (musl).
 RUN apk add --no-cache openssl
@@ -13,7 +13,7 @@ COPY . .
 RUN pnpm prisma:generate
 RUN pnpm build
 
-FROM node:20-alpine AS production
+FROM node:26-alpine AS production
 WORKDIR /app
 # openssl: Prisma's query + migration engines need it on Alpine (musl).
 # curl:    used by the compose/orchestrator healthcheck against /api/health.
