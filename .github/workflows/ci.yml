@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
       # Build both production images so a broken Dockerfile fails CI instead of the deploy.
       # push=false — this only validates the build; gha cache keeps reruns fast.
       - name: Build backend image
