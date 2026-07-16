@@ -32,7 +32,7 @@
     "@anthropic-ai/sdk": "^0.110.0",
     "@azure/storage-blob": "^12.33.0",
     "@langchain/core": "^0.3.80",
-    "@langchain/langgraph": "^0.4.9",
+    "@langchain/langgraph": "^1.4.8",
     "@langchain/openai": "^0.3.17",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.28",
