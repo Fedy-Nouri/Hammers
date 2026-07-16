@@ -29,7 +29,7 @@
     "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.110.0",
+    "@anthropic-ai/sdk": "^0.111.0",
     "@azure/storage-blob": "^12.33.0",
     "@langchain/core": "^0.3.80",
     "@langchain/langgraph": "^0.4.9",
@@ -49,10 +49,10 @@
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "helmet": "^8.2.0",
+    "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
     "multer": "^2.2.0",
-    "openai": "^6.46.0",
+    "openai": "^6.47.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pdf-parse": "^2.4.5",
@@ -60,13 +60,13 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.17.2",
     "rxjs": "^7.8.1",
-    "stripe": "^22.3.1",
+    "stripe": "^22.3.2",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^11.0.0",
+    "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.1.28",
     "@types/bcryptjs": "^3.0.0",
@@ -76,7 +76,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
-    "@types/supertest": "^7.0.0",
+    "@types/supertest": "^7.2.1",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -91,7 +91,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.63.0"
+    "typescript-eslint": "^8.64.0"
   },
   "jest": {
     "moduleFileExtensions": [
