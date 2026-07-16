@@ -10,7 +10,7 @@
     "login": "ts-node -r dotenv/config src/login.ts"
   },
   "dependencies": {
-    "@deepgram/sdk": "^3.13.0",
+    "@deepgram/sdk": "^5.6.0",
     "axios": "^1.18.1",
     "dotenv": "^16.0.0",
     "express": "^4.19.0",
